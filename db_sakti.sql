@@ -41,6 +41,7 @@ CREATE TABLE t_taksasi (
 	est_weight NUMERIC(8,2) DEFAULT 0,
 	est_hk NUMERIC(8,2) DEFAULT 0,
 	est_output NUMERIC(8,2) DEFAULT 0,
+	queue INT4 DEFAULT 0,
     create_by VARCHAR,
     create_date TIMESTAMP,
     write_by VARCHAR,
