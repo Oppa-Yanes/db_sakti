@@ -36,7 +36,7 @@ CREATE TABLE t_taksasi (
 	plant_total INT4 DEFAULT 0,
 	bjr NUMERIC(8,2) DEFAULT 0,
 	base_weight INT4 DEFAULT 0,
-	akp NUMERIC(8,2) DEFAULT 0,
+	akp NUMERIC DEFAULT 0,
 	est_ripe_bunch INT4 DEFAULT 0,
 	est_weight NUMERIC(8,2) DEFAULT 0,
 	est_hk NUMERIC(8,2) DEFAULT 0,
