@@ -223,7 +223,7 @@ CREATE TABLE t_harvest (
 DROP TABLE IF EXISTS t_bkm CASCADE;
 CREATE TABLE t_bkm (
     id UUID PRIMARY KEY,
-	rkh_id UUID NOT NULL,
+	location_id UUID NOT NULL,
 	harvester_id UUID UNIQUE NOT NULL,
 	ha_amt NUMERIC(8,2) NOT NULL DEFAULT 0,
 	p01 NUMERIC(8,2) NOT NULL DEFAULT 0,
@@ -241,7 +241,7 @@ CREATE TABLE t_bkm (
     write_by VARCHAR,
     write_date TIMESTAMP,
     
-    CONSTRAINT fk_rkh FOREIGN KEY (rkh_id) REFERENCES t_rkh(id),
+    CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES t_location(id),
     CONSTRAINT fk_harvester FOREIGN KEY (harvester_id) REFERENCES t_harvester(id),
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
