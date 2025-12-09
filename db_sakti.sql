@@ -194,10 +194,13 @@ CREATE TABLE t_harvest (
     long FLOAT NOT NULL DEFAULT 0,
 	bunch_qty INT4 NOT NULL DEFAULT 0,
 	unripe_qty INT4 NOT NULL DEFAULT 0,
-	overripe_qty INT4 NOT NULL DEFAULT 0,
 	rotten_qty INT4 NOT NULL DEFAULT 0,
 	empty_bunch_qty INT4 NOT NULL DEFAULT 0,
 	loose_fruit_qty NUMERIC(8,2) NOT NULL DEFAULT 0,
+	abnormal_01_qty INT4 NOT NULL DEFAULT 0, -- TBS < 5 kg
+	abnormal_02_qty INT4 NOT NULL DEFAULT 0, -- Dimakan tikus
+	abnormal_03_qty INT4 NOT NULL DEFAULT 0, -- Hard bunch (buah batu)
+	abnormal_04_qty INT4 NOT NULL DEFAULT 0, -- Parthenocarpy
 	pic_path VARCHAR NOT NULL,
 	pic_uri VARCHAR NOT NULL,
 	rfid_uid VARCHAR,
