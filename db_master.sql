@@ -58,6 +58,8 @@ CREATE TABLE m_division (
     company_id INT4 NOT NULL,
     estate_id INT4 NOT NULL,
     parent_id INT4,
+	asisten_kepala_id INT4,
+	asisten_id INT4,
     is_disabled BOOLEAN DEFAULT FALSE,
     create_by VARCHAR,
     create_date TIMESTAMP,
@@ -67,7 +69,9 @@ CREATE TABLE m_division (
     CONSTRAINT fk_operating_unit FOREIGN KEY (operating_unit_id) REFERENCES m_operating_unit(id),
     CONSTRAINT fk_company FOREIGN KEY (company_id) REFERENCES m_company(id),
     CONSTRAINT fk_estate FOREIGN KEY (estate_id) REFERENCES m_estate(id),
-    CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES m_division(id)
+    CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES m_division(id),
+    CONSTRAINT fk_asisten_kepala FOREIGN KEY (asisten_kepala_id) REFERENCES m_employee(id),
+    CONSTRAINT fk_asisten FOREIGN KEY (asisten_id) REFERENCES m_employee(id)
 );
 
 DROP TABLE IF EXISTS m_department CASCADE;
