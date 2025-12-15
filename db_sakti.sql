@@ -122,33 +122,6 @@ CREATE TABLE t_rkh (
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
 
-DROP TABLE IF EXISTS t_harvester CASCADE;
-CREATE TABLE t_harvester (
-    id UUID PRIMARY KEY,
-	rkh_id UUID NOT NULL,
-	emp_id INT4 NOT NULL,
-	nip VARCHAR NOT NULL,
-	fp_id VARCHAR NOT NULL,
-	name VARCHAR NOT NULL,
-	job_level_id INT4 NOT NULL,
- 	job_level_name VARCHAR,
-	job_id INT4 NOT NULL,
- 	job_name VARCHAR,
-	is_asistensi BOOLEAN DEFAULT FALSE,
-	foreman_group_id INT4 NOT NULL,
-	foreman_group_name VARCHAR,
-    profile_id UUID NOT NULL,
-    date_sync TIMESTAMP,
-    sync_attempt INT4 NOT NULL DEFAULT 0,
-    create_by VARCHAR,
-    create_date TIMESTAMP,
-    write_by VARCHAR,
-    write_date TIMESTAMP,
-    
-    CONSTRAINT fk_rkh FOREIGN KEY (rkh_id) REFERENCES t_rkh(id),
-    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
-);
-
 DROP TABLE IF EXISTS t_foreman CASCADE;
 CREATE TABLE t_foreman (
     id UUID PRIMARY KEY,
@@ -171,6 +144,31 @@ CREATE TABLE t_foreman (
     write_date TIMESTAMP,
     
     CONSTRAINT fk_rkh FOREIGN KEY (rkh_id) REFERENCES t_rkh(id),
+    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
+);
+
+DROP TABLE IF EXISTS t_harvester CASCADE;
+CREATE TABLE t_harvester (
+    id UUID PRIMARY KEY,
+	foreman_id UUID NOT NULL,
+	emp_id INT4 NOT NULL,
+	nip VARCHAR NOT NULL,
+	fp_id VARCHAR NOT NULL,
+	name VARCHAR NOT NULL,
+	job_level_id INT4 NOT NULL,
+ 	job_level_name VARCHAR,
+	job_id INT4 NOT NULL,
+ 	job_name VARCHAR,
+	is_asistensi BOOLEAN DEFAULT FALSE,
+    profile_id UUID NOT NULL,
+    date_sync TIMESTAMP,
+    sync_attempt INT4 NOT NULL DEFAULT 0,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP,
+    
+    CONSTRAINT fk_foreman FOREIGN KEY (foreman_id) REFERENCES t_foreman(id),
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
 
