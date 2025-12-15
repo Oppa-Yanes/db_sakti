@@ -83,7 +83,6 @@ CREATE TABLE t_transport (
 	division_id INT4 NOT NULL,
 	equipment_id INT4 NOT NULL,
 	driver_id INT4 NOT NULL,
-	loader_id INT4 NOT NULL,
 	total_bunch INT4 NOT NULL DEFAULT 0,
 	total_loose_fruit NUMERIC(8,2) NOT NULL DEFAULT 0,
 	total_weight NUMERIC(8,2) NOT NULL DEFAULT 0,
@@ -101,6 +100,24 @@ CREATE TABLE t_transport (
     
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
+
+DROP TABLE IF EXISTS t_loader CASCADE;
+CREATE TABLE t_loader (
+    id UUID PRIMARY KEY,
+	transport_id UUID NOT NULL,
+	loader_id INT4 NOT NULL,
+	profile_id UUID NOT NULL,
+    date_sync TIMESTAMP,
+    sync_attempt INT4 NOT NULL DEFAULT 0,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP,
+    
+    CONSTRAINT fk_transport FOREIGN KEY (transport_id) REFERENCES t_transport(id),
+    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
+);
+
 
 DROP TABLE IF EXISTS t_rkh CASCADE;
 CREATE TABLE t_rkh (
@@ -127,14 +144,9 @@ CREATE TABLE t_foreman (
     id UUID PRIMARY KEY,
 	rkh_id UUID NOT NULL,
  	foreman_group_id INT4 NOT NULL,
-	foreman_group_name VARCHAR,
  	foreman_id INT4 NOT NULL,
-	foreman_nip VARCHAR NOT NULL,
-	foreman_name VARCHAR NOT NULL,
-	foreman_job_level_id INT4 NOT NULL,
- 	foreman_job_level_name VARCHAR NOT NULL,
-	foreman_job_id INT4 NOT NULL,
- 	foreman_job_name VARCHAR NOT NULL,
+ 	foreman1_id INT4 NOT NULL,
+ 	kerani_harvest_id INT4 NOT NULL,
     profile_id UUID NOT NULL,
     date_sync TIMESTAMP,
     sync_attempt INT4 NOT NULL DEFAULT 0,
