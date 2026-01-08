@@ -175,6 +175,7 @@ CREATE TABLE t_harvester (
  	job_level_name VARCHAR,
 	job_id INT4 NOT NULL,
  	job_name VARCHAR,
+	is_kutip_required BOOLEAN DEFAULT TRUE,
 	is_asistensi BOOLEAN DEFAULT FALSE,
     profile_id UUID NOT NULL,
     date_sync TIMESTAMP,
