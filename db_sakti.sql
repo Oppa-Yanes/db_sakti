@@ -194,7 +194,9 @@ CREATE TABLE t_location (
 	rkh_id UUID NOT NULL,
 	block_id INT4 NOT NULL,
 	block_code VARCHAR NOT NULL,
+	is_carry_over BOOLEAN DEFAULT FALSE,
 	harvest_area NUMERIC(8,2) NOT NULL DEFAULT 0,
+	harvest_area_target NUMERIC(8,2) NOT NULL DEFAULT 0, -- Sisa luasan yang belum dikerjakan
 	est_weight NUMERIC(8,2) NOT NULL DEFAULT 0,
 	est_bunch INT4 NOT NULL DEFAULT 0,
 	est_hk NUMERIC(8,2) NOT NULL DEFAULT 0,
