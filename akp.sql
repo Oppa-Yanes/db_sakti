@@ -29,6 +29,7 @@ CREATE TABLE t_akp_line (
     id UUID PRIMARY KEY,
     akp_id UUID NOT NULL,
 	baris_nbr INT4 NOT NULL DEFAULT 0,
+	baris_nbr_1 INT4,
     total_plant NUMERIC(8,2) NOT NULL DEFAULT 0,
  	pic_path VARCHAR NOT NULL,
 	pic_uri VARCHAR NOT NULL,
