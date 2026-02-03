@@ -324,6 +324,23 @@ CREATE TABLE m_premi_rate (
 	CONSTRAINT fk_premi_rule FOREIGN KEY (rule_id) REFERENCES m_premi_rule(id)
 );
 
+DROP TABLE IF EXISTS m_transporter CASCADE;
+CREATE TABLE m_transporter (
+    id INT4 PRIMARY KEY,
+    code VARCHAR NOT NULL UNIQUE,
+    name VARCHAR NOT NULL,
+	phone VARCHAR,
+	mobile VARCHAR,
+	email VARCHAR,
+	address VARCHAR,
+	city VARCHAR,
+    is_disabled BOOLEAN DEFAULT FALSE,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP
+);
+
 -- CREATE ACCESS TO ODOO GBS_PRD
 
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;
@@ -830,4 +847,36 @@ SET
     write_date = EXCLUDED.write_date
 ;
 
-
+-- m_transporter
+UPDATE m_transporter SET is_disabled = TRUE;
+INSERT INTO m_transporter (id, code, name, phone, mobile, email, address, city, is_disabled, create_by, create_date, write_by, write_date)
+SELECT
+    a.id,
+    a.vendor_code,
+    a.name,
+    a.phone,
+    a.mobile,
+    a.email,
+    a.contact_address_complete,
+    a.city,
+    FALSE, x.login, a.create_date, y.login, a.write_date
+FROM
+    res_partner a
+    LEFT JOIN res_partner_res_partner_category_rel b ON b.partner_id = a.id
+    LEFT JOIN res_users x ON x.id = a.create_uid
+    LEFT JOIN res_users y ON y.id = a.write_uid
+WHERE
+    a.active = TRUE
+    AND a.vendor_code IS NOT NULL
+    AND a.category_id = 6
+ON CONFLICT (code) DO UPDATE SET
+    name = EXCLUDED.name,
+    phone = EXCLUDED.phone,
+    mobile = EXCLUDED.mobile,
+    email = EXCLUDED.email,
+    address = EXCLUDED.address,
+    city = EXCLUDED.city,
+    is_disabled = EXCLUDED.is_disabled,
+    write_by = EXCLUDED.write_by,
+    write_date = EXCLUDED.write_date
+;
