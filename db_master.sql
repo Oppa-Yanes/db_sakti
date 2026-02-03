@@ -694,14 +694,14 @@ SET
 -- m_equipment
 UPDATE m_equipment SET is_disabled = TRUE;
 INSERT INTO m_equipment (
-	id, code, name, asset_id, class_id, class_type, class_name, note, model, serial_no, effective_date,
-	company_id, estate_id, warehouse_id, cost_center_id, owning_status_id, owner_id, brand_id, unit_model_id,
+	id, code, name, status_id, asset_id, class_id, class_type, class_name, note, model, serial_no, effective_date,
+	company_id, estate_id, warehouse_id, cost_center_id, owning_status_id, driver_name, transporter_id, owner_id, brand_id, unit_model_id,
 	machine_class_id, manufacturing_year, engine_branch, acquisition_date, measuring_type, hourmeter, 
 	kilometer, operating_unit_id, is_disabled, create_by, create_date, write_by, write_date
 	)
 	SELECT
 		a.id, a.name, a.equipment_name, a.owning_status_id, a.asset_id, a.equipment_class_id, c.class_id, c.name, a.note, a.model, a.serial_no, a.effective_date, 
-		b.company_id, b.plantation_estate_id, a.warehouse_id, a.cost_center_id, a.owning_status_id, a.owner_id, a.brand_id, a.unit_model_id, 
+		b.company_id, b.plantation_estate_id, a.warehouse_id, a.cost_center_id, a.owning_status_id, a.driver_name, a.transporter_id, a.owner_id, a.brand_id, a.unit_model_id, 
 		a.machine_class_id, a.manufacturing_year, a.engine_branch, a.acquisition_date, a.measuring_type, a.hourmeter, 
 	  	a.kilometer, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
 	FROM
@@ -730,6 +730,7 @@ ON CONFLICT (id) DO UPDATE
 SET
 	code = EXCLUDED.code, 
 	name = EXCLUDED.name, 
+	status_id = EXCLUDED.status_id,
 	asset_id = EXCLUDED.asset_id, 
 	class_id = EXCLUDED.class_id, 
 	class_type = EXCLUDED.class_type, 
@@ -743,6 +744,8 @@ SET
 	warehouse_id = EXCLUDED.warehouse_id, 
 	cost_center_id = EXCLUDED.cost_center_id, 
 	owning_status_id = EXCLUDED.owning_status_id, 
+	driver_name = EXCLUDED.driver_name,
+	transporter_id = EXCLUDED.transporter_id,
 	owner_id = EXCLUDED.owner_id, 
 	brand_id = EXCLUDED.brand_id, 
 	unit_model_id = EXCLUDED.unit_model_id, 
