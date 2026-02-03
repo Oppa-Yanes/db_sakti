@@ -249,6 +249,8 @@ CREATE TABLE m_equipment (
 	warehouse_id INT4, 
 	cost_center_id INT4, 
 	owning_status_id INT4, 
+	driver_name VARCHAR,
+	transporter_id INT4,
 	owner_id INT4, 
 	brand_id INT4, 
 	unit_model_id INT4, 
@@ -266,6 +268,7 @@ CREATE TABLE m_equipment (
 	write_by VARCHAR,
 	write_date TIMESTAMP,
 	
+    CONSTRAINT fk_transporter FOREIGN KEY (transporter_id) REFERENCES m_transporter(id),
     CONSTRAINT fk_company FOREIGN KEY (company_id) REFERENCES m_company(id),
     CONSTRAINT fk_estate FOREIGN KEY (estate_id) REFERENCES m_estate(id),
     CONSTRAINT fk_operating_unit FOREIGN KEY (operating_unit_id) REFERENCES m_operating_unit(id) 
