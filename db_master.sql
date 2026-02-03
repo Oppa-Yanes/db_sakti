@@ -235,6 +235,7 @@ CREATE TABLE m_equipment (
 	id INT4 PRIMARY KEY, 
 	code VARCHAR NOT NULL, 
 	name VARCHAR NOT NULL, 
+	status_id INT4 NOT NULL, 
 	asset_id INT4 NOT NULL, 
 	class_id INT4, 
 	class_type VARCHAR, 
@@ -695,20 +696,33 @@ INSERT INTO m_equipment (
 	machine_class_id, manufacturing_year, engine_branch, acquisition_date, measuring_type, hourmeter, 
 	kilometer, operating_unit_id, is_disabled, create_by, create_date, write_by, write_date
 	)
-SELECT
-	a.id, a.name, a.equipment_name, a.asset_id, a.equipment_class_id, c.class_id, c.name, a.note, a.model, a.serial_no, a.effective_date, 
-	b.company_id, b.plantation_estate_id, a.warehouse_id, a.cost_center_id, a.owning_status_id, a.owner_id, a.brand_id, a.unit_model_id, 
-	a.machine_class_id, a.manufacturing_year, a.engine_branch, a.acquisition_date, a.measuring_type, a.hourmeter, 
-  	a.kilometer, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
-  	
-FROM
-	maintenance_equipment a 
-	LEFT JOIN plantation_cost_center b ON b.id = a.cost_center_id 
-	LEFT JOIN maintenance_class_equipment_type c ON c.id = a.equipment_class_id 
-	LEFT JOIN res_users x ON x.id = a.create_uid
-    LEFT JOIN res_users y ON y.id = a.write_uid
-WHERE
-	b.id IS NOT NULL 
+	SELECT
+		a.id, a.name, a.equipment_name, a.owning_status_id, a.asset_id, a.equipment_class_id, c.class_id, c.name, a.note, a.model, a.serial_no, a.effective_date, 
+		b.company_id, b.plantation_estate_id, a.warehouse_id, a.cost_center_id, a.owning_status_id, a.owner_id, a.brand_id, a.unit_model_id, 
+		a.machine_class_id, a.manufacturing_year, a.engine_branch, a.acquisition_date, a.measuring_type, a.hourmeter, 
+	  	a.kilometer, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
+	FROM
+		maintenance_equipment a 
+		LEFT JOIN plantation_cost_center b ON b.id = a.cost_center_id 
+		LEFT JOIN maintenance_class_equipment_type c ON c.id = a.equipment_class_id 
+		LEFT JOIN res_users x ON x.id = a.create_uid
+	    LEFT JOIN res_users y ON y.id = a.write_uid
+	WHERE
+		b.id IS NOT NULL 
+	UNION ALL
+	SELECT 
+		a.id+10000, a.name, a.name, a.status_id, NULL, NULL, NULL, a.mark, a.description, NULL, NULL, a.create_date, 
+		b.company_id, a.estate_id, NULL, NULL, NULL, NULL, NULL, NULL, 
+		NULL, NULL, NULL, NULL, a.measuring_type, NULL, 
+	  	NULL, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
+	FROM
+		maintenance_rental_vehicle a
+		LEFT JOIN plantation_estate b ON b.id = a.estate_id 
+		LEFT JOIN res_users x ON x.id = a.create_uid
+	    LEFT JOIN res_users y ON y.id = a.write_uid
+	WHERE
+		a.active 
+		AND a.status_id IN (7)
 ON CONFLICT (id) DO UPDATE
 SET
 	code = EXCLUDED.code, 
