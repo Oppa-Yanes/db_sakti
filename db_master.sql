@@ -701,7 +701,7 @@ INSERT INTO m_equipment (
 	)
 	SELECT
 		a.id, a.name, a.equipment_name, a.owning_status_id, a.asset_id, a.equipment_class_id, c.class_id, c.name, a.note, a.model, a.serial_no, a.effective_date, 
-		b.company_id, b.plantation_estate_id, a.warehouse_id, a.cost_center_id, a.owning_status_id, a.driver_name, a.transporter_id, a.owner_id, a.brand_id, a.unit_model_id, 
+		b.company_id, b.plantation_estate_id, a.warehouse_id, a.cost_center_id, a.owning_status_id, NULL, NULL, a.owner_id, a.brand_id, a.unit_model_id, 
 		a.machine_class_id, a.manufacturing_year, a.engine_branch, a.acquisition_date, a.measuring_type, a.hourmeter, 
 	  	a.kilometer, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
 	FROM
@@ -714,8 +714,8 @@ INSERT INTO m_equipment (
 		b.id IS NOT NULL 
 	UNION ALL
 	SELECT 
-		a.id+10000, a.name, a.name, a.status_id, NULL, NULL, NULL, a.mark, a.description, NULL, NULL, a.create_date, 
-		b.company_id, a.estate_id, NULL, NULL, NULL, NULL, NULL, NULL, 
+		a.id, a.name, a.name, a.status_id, NULL, NULL, NULL, a.mark, a.description, NULL, NULL, a.create_date, 
+		b.company_id, a.estate_id, NULL, NULL, NULL, a.driver_name, a.transporter_id, NULL, NULL, NULL, 
 		NULL, NULL, NULL, NULL, a.measuring_type, NULL, 
 	  	NULL, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
 	FROM
@@ -888,7 +888,7 @@ FROM
 WHERE
     a.active = TRUE
     AND a.vendor_code IS NOT NULL
-    AND a.category_id = 6
+    AND b.category_id = 6
 ON CONFLICT (code) DO UPDATE SET
     name = EXCLUDED.name,
     phone = EXCLUDED.phone,
