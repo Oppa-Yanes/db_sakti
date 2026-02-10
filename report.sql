@@ -1,7 +1,7 @@
 -- report monitong SAKTI
 WITH params AS (
 	SELECT 
-		'20260209' current_date
+		'20260210' current_date
 ),
 hk_act AS (
 	WITH attendance AS (
@@ -85,6 +85,7 @@ SELECT
 	rkh.rkh_nbr,
 	rkh.rkh_date,
 	rkh.create_by rkh_user,
+	rkh.stage rkh_stage,
 	loc.block_code,
 	loc.is_carry_over,
 	loc.harvest_area_target rkh_harvest_area,
@@ -111,10 +112,10 @@ FROM
 	LEFT JOIN m_division div ON div.id = rkh.division_id 
 	JOIN params p ON TRUE
 WHERE
-	rkh.stage = 'C'
-	AND TO_CHAR(rkh.rkh_date, 'YYYYMMDD') = p.current_date
+	TO_CHAR(rkh.rkh_date, 'YYYYMMDD') = p.current_date
 ORDER BY
 	rkh.rkh_nbr,
 	loc.block_code
 ;
+
 
