@@ -257,6 +257,25 @@ CREATE TABLE t_harvest (
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
 
+-- menghubungkan t_transport dan t_harvest agar tidak deadlock
+-- add t_transport_harvest_rel setiap saat TIKA di tap di SPB, harvest_id diambilkan dari kartu TIKA
+-- setiap kali t_harvest diupload, cari ke t_transport_harvest_rel berdasarkan harvest_id, jika ada ambil transport_id
+DROP TABLE IF EXISTS t_transport_harvest_rel CASCADE;
+CREATE TABLE t_transport_harvest_rel (
+    id UUID PRIMARY KEY,
+	transport_id UUID NOT NULL,
+	harvest_id UUID,
+	profile_id UUID NOT NULL,
+    date_sync TIMESTAMP,
+    sync_attempt INT4 NOT NULL DEFAULT 0,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP,
+    
+    CONSTRAINT fk_transport FOREIGN KEY (transport_id) REFERENCES t_transport(id)
+);	
+
 DROP TABLE IF EXISTS t_bkm CASCADE;
 CREATE TABLE t_bkm (
     id UUID PRIMARY KEY,
