@@ -265,6 +265,7 @@ CREATE TABLE t_transport_harvest_rel (
     id UUID PRIMARY KEY,
 	transport_id UUID NOT NULL,
 	harvest_id UUID,
+	location_id UUID,
 	profile_id UUID NOT NULL,
     date_sync TIMESTAMP,
     sync_attempt INT4 NOT NULL DEFAULT 0,
