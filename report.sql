@@ -1,7 +1,7 @@
 -- report monitong SAKTI
 WITH params AS (
 	SELECT 
-		'20260210' current_date
+		'20260211' current_date
 ),
 hk_act AS (
 	WITH attendance AS (
@@ -93,8 +93,8 @@ SELECT
 	COALESCE(bcc.counter, 0) bcc_cnt,
 	COALESCE(spb.counter, 0) spb_cnt,
 	loc.est_weight rkh_weight,
-	COALESCE(bcc.bunch_qty, 0) * (loc.est_weight / loc.est_bunch) bcc_weight,
-	COALESCE(spb.bunch_qty, 0) * (loc.est_weight / loc.est_bunch) spb_weight,
+	COALESCE(bcc.bunch_qty, 0) * (loc.est_weight / NULLIF(loc.est_bunch, 0)) bcc_weight,
+	COALESCE(spb.bunch_qty, 0) * (loc.est_weight / NULLIF(loc.est_bunch, 0)) spb_weight,
 	loc.est_bunch rkh_bunch,
 	COALESCE(bcc.bunch_qty, 0) bcc_bunch,
 	COALESCE(spb.bunch_qty, 0) spb_bunch,
