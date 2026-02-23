@@ -125,6 +125,22 @@ CREATE TABLE t_loader (
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
 
+DROP TABLE IF EXISTS t_mover CASCADE;
+CREATE TABLE t_mover (
+    id UUID PRIMARY KEY,
+	transport_id UUID NOT NULL,
+	mover_id INT4 NOT NULL,
+	profile_id UUID NOT NULL,
+    date_sync TIMESTAMP,
+    sync_attempt INT4 NOT NULL DEFAULT 0,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP,
+    
+    CONSTRAINT fk_transport FOREIGN KEY (transport_id) REFERENCES t_transport(id),
+    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
+);
 
 DROP TABLE IF EXISTS t_rkh CASCADE;
 CREATE TABLE t_rkh (
@@ -212,6 +228,7 @@ CREATE TABLE t_location (
 	est_bunch INT4 NOT NULL DEFAULT 0,
 	est_hk NUMERIC(8,2) NOT NULL DEFAULT 0,
 	est_output NUMERIC(8,2) NOT NULL DEFAULT 0,
+	hanca_cnt INT4 NOT NULL DEFAULT 0,
     profile_id UUID NOT NULL,
     date_sync TIMESTAMP,
     sync_attempt INT4 NOT NULL DEFAULT 0,
@@ -221,6 +238,25 @@ CREATE TABLE t_location (
     write_date TIMESTAMP,
     
     CONSTRAINT fk_rkh FOREIGN KEY (rkh_id) REFERENCES t_rkh(id),
+    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
+);
+
+DROP TABLE IF EXISTS t_hanca CASCADE;
+CREATE TABLE t_hanca (
+    id UUID PRIMARY KEY,
+	location_id NOT NULL,
+	hanca_nbr INT4 NOT NULL DEFAULT 0,
+	harvester_id UUID,
+    profile_id UUID NOT NULL,
+    date_sync TIMESTAMP,
+    sync_attempt INT4 NOT NULL DEFAULT 0,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP,
+    
+    CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES t_location(id),
+    CONSTRAINT fk_harvester FOREIGN KEY (harvester_id) REFERENCES t_harvester(id),
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
 
