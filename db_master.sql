@@ -345,6 +345,23 @@ CREATE TABLE m_transporter (
     write_date TIMESTAMP
 );
 
+DROP TABLE IF EXISTS m_attendance_type CASCADE;
+CREATE TABLE m_attendance_type (
+	id INT4 PRIMARY KEY,
+    code VARCHAR NOT NULL UNIQUE,
+    name VARCHAR NOT NULL,
+    company_id INT4 NOT NULL,
+    is_fp_required BOOLEAN DEFAULT FALSE,
+    is_default BOOLEAN DEFAULT FALSE,
+    is_disabled BOOLEAN DEFAULT FALSE,
+    create_by VARCHAR,
+    create_date TIMESTAMP,
+    write_by VARCHAR,
+    write_date TIMESTAMP
+
+	CONSTRAINT fk_company FOREIGN KEY (company_id) REFERENCES m_company(id),
+);
+
 -- CREATE ACCESS TO ODOO GBS_PRD
 
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;
@@ -896,6 +913,34 @@ ON CONFLICT (code) DO UPDATE SET
     email = EXCLUDED.email,
     address = EXCLUDED.address,
     city = EXCLUDED.city,
+    is_disabled = EXCLUDED.is_disabled,
+    write_by = EXCLUDED.write_by,
+    write_date = EXCLUDED.write_date
+;
+
+-- m_attendance_type
+UPDATE m_attendance_type SET is_disabled = TRUE;
+INSERT INTO m_attendance_type (id, code, name, company_id, is_fp_required, is_default, is_disabled, create_by, create_date, write_by, write_date)
+SELECT
+    a.id,
+    a.code,
+    a.name,
+    a.company_id,
+    a.code = 'KJ',
+    a.code = 'KJ',
+    FALSE, x.login, a.create_date, y.login, a.write_date
+FROM
+    hr_attendance_type a
+    LEFT JOIN res_users x ON x.id = a.create_uid
+    LEFT JOIN res_users y ON y.id = a.write_uid
+WHERE
+    a.active = TRUE
+    AND code IN ('KJ','CT','IT','M','ST')
+ON CONFLICT (code) DO UPDATE SET
+    name = EXCLUDED.name,
+    company_id = EXCLUDED.company_id,
+    is_fp_required = EXCLUDED.is_fp_required,
+    is_default = EXCLUDED.is_default,
     is_disabled = EXCLUDED.is_disabled,
     write_by = EXCLUDED.write_by,
     write_date = EXCLUDED.write_date
