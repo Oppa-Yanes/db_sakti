@@ -211,6 +211,7 @@ CREATE TABLE m_foreman_group (
     kerani_id INT4,
     kerani1_id INT4,
     kerani_panen_id INT4,
+	kerani_kirim_id INT4,
     operating_unit_id INT4 NOT NULL,
     company_id INT4 NOT NULL,
     division_id INT4,
@@ -227,7 +228,8 @@ CREATE TABLE m_foreman_group (
     CONSTRAINT fk_foreman1 FOREIGN KEY (foreman1_id) REFERENCES m_employee(id),
     CONSTRAINT fk_kerani FOREIGN KEY (kerani_id) REFERENCES m_employee(id),
     CONSTRAINT fk_kerani1 FOREIGN KEY (kerani1_id) REFERENCES m_employee(id),
-    CONSTRAINT fk_kerani_panen FOREIGN KEY (kerani_panen_id) REFERENCES m_employee(id)
+    CONSTRAINT fk_kerani_panen FOREIGN KEY (kerani_panen_id) REFERENCES m_employee(id),
+    CONSTRAINT fk_kerani_kirim FOREIGN KEY (kerani_kirim_id) REFERENCES m_employee(id)
 );
 
 DROP TABLE IF EXISTS m_equipment CASCADE;
@@ -678,7 +680,7 @@ SET
 
 -- foreman group
 UPDATE m_foreman_group SET is_disabled = TRUE;
-INSERT INTO m_foreman_group (id, code, name, type, foreman_id, foreman1_id, kerani_id, kerani1_id, kerani_panen_id, operating_unit_id, company_id, division_id, is_disabled, create_by, create_date, write_by, write_date)
+INSERT INTO m_foreman_group (id, code, name, type, foreman_id, foreman1_id, kerani_id, kerani1_id, kerani_panen_id, kerani_kirim_id, operating_unit_id, company_id, division_id, is_disabled, create_by, create_date, write_by, write_date)
 SELECT a.id, a.code, a.name, a.type, CASE WHEN c.id IS NULL THEN NULL ELSE a.foreman_id END, CASE WHEN d.id IS NULL THEN NULL ELSE a.foreman1_id END, a.kerani_id, a.kerani1_id, a.kerani_harvest_id, a.operating_unit_id, a.company_id, b.division_id, FALSE, x.login, a.create_date, y.login, a.write_date
 FROM
     hr_foreman_group a
@@ -698,6 +700,7 @@ SET
     kerani_id         = EXCLUDED.kerani_id,
     kerani1_id        = EXCLUDED.kerani1_id,
     kerani_panen_id   = EXCLUDED.kerani_panen_id,
+    kerani_kirim_id   = EXCLUDED.kerani_kirim_id,
     operating_unit_id = EXCLUDED.operating_unit_id,
     company_id        = EXCLUDED.company_id,
     division_id       = EXCLUDED.division_id,
