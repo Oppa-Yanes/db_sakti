@@ -170,6 +170,7 @@ CREATE TABLE t_foreman (
  	foreman_id INT4 NOT NULL,
  	foreman1_id INT4 NOT NULL,
  	kerani_harvest_id INT4 NOT NULL,
+	is_kutip_required BOOLEAN DEFAULT TRUE,
     profile_id UUID NOT NULL,
     date_sync TIMESTAMP,
     sync_attempt INT4 NOT NULL DEFAULT 0,
@@ -194,7 +195,6 @@ CREATE TABLE t_harvester (
  	job_level_name VARCHAR,
 	job_id INT4 NOT NULL,
  	job_name VARCHAR,
-	is_kutip_required BOOLEAN DEFAULT TRUE,
 	is_asistensi BOOLEAN DEFAULT FALSE,
 	attendance_type_id INT4 NOT NULL,
     time_in TIMESTAMP,
@@ -297,6 +297,7 @@ CREATE TABLE t_harvest (
     
     CONSTRAINT fk_transport FOREIGN KEY (transport_id) REFERENCES t_transport(id),
     CONSTRAINT fk_harvester FOREIGN KEY (harvester_id) REFERENCES t_harvester(id),
+    CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES t_location(id),
     CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES m_profile(id)
 );
 
