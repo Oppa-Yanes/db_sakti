@@ -58,8 +58,8 @@ WITH params AS (
 		'41d68b8e-4d3c-4f4b-8232-9b9997febd8c'::UUID bkm_id
 )
 SELECT 
-	hvr.emp_id,
-	hvr.attendance_type_id,
+	hvt.emp_id,
+	hvt.attendance_type_id,
 	loc.block_id,
 	hv.tph_id,
 	bkm.ha_amt,
@@ -67,12 +67,12 @@ SELECT
 	hv.loose_fruit_qty 
 FROM
 	sakti_harvest hv
-	LEFT JOIN sakti_harvester hvr ON hvr.id = hv.harvester_id 
+	LEFT JOIN sakti_harvester hvt ON hvt.id = hv.harvester_id 
 	LEFT JOIN sakti_location loc ON loc.id = hv.location_id 
 	LEFT JOIN sakti_bkm bkm ON bkm.harvester_id = hv.harvester_id AND bkm.location_id = hv.location_id
 	JOIN params p ON TRUE
 WHERE
-	hvr.foreman_id = p.bkm_id
+	hvt.foreman_id = p.bkm_id
 ;
 
 
