@@ -14,7 +14,7 @@ holiday AS (
 	FROM
 		params p
 ),
-block_ids AS (
+block_agg AS (
 	SELECT
 		hvr.foreman_id,
 		hv.harvest_date::DATE harvest_date,
@@ -28,22 +28,22 @@ block_ids AS (
 		hv.harvest_date::DATE
 )
 SELECT
-	bkm.id bkm_id,
+	batch.id batch_id,
 	rkh.rkh_date date,
 	h.is_holiday,
-	bids.planted_block_ids,
+	bagg.planted_block_ids,
 	--f.is_kutip_required,
-	bkm.foreman_group_id,
-	bkm.foreman_id,
-	bkm.foreman1_id,
-	bkm.kerani_harvest_id,
+	batch.foreman_group_id,
+	batch.foreman_id,
+	batch.foreman1_id,
+	batch.kerani_harvest_id,
 	est.operating_unit_id,
 	rkh.estate_id,
 	com.id company_id
 FROM
-	sakti_foreman bkm
-	LEFT JOIN sakti_rkh rkh ON rkh.id = bkm.rkh_id
-	LEFT JOIN block_ids bids ON bids.foreman_id = bkm.id AND bids.harvest_date = rkh.rkh_date
+	sakti_foreman batch
+	LEFT JOIN sakti_rkh rkh ON rkh.id = batch.rkh_id
+	LEFT JOIN block_agg bagg ON bagg.foreman_id = batch.id AND bagg.harvest_date = rkh.rkh_date
 	LEFT JOIN plantation_estate est ON est.id = rkh.estate_id
 	LEFT JOIN res_company com ON com.id = rkh.company_id
 	JOIN holiday h ON TRUE
