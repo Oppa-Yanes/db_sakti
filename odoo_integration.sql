@@ -76,6 +76,7 @@ WHERE
 ;
 
 -- Hasil Panen - Premi
+-- Perhitungan Lebih Basis yang belum diintegrasikan antara WB dengan SAKTI
 WITH params AS (
 	SELECT
 		'20260304' AS current_date
