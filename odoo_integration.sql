@@ -79,49 +79,42 @@ WHERE
 -- Perhitungan Lebih Basis yang belum diintegrasikan antara WB dengan SAKTI
 WITH params AS (
 	SELECT
-		'20260304' AS current_date
+		1 AS company_id,
+		DATE '2026-03-04' AS current_date
 ),
 holiday AS (
 	SELECT 
-		(EXTRACT(DOW FROM TO_DATE(p.current_date, 'YYYYMMDD')) = 0
-			OR EXISTS (
-				SELECT 1 
-				FROM gbs_hr_holiday_line hl 
-				WHERE hl.date = TO_DATE(p.current_date, 'YYYYMMDD'))
+		(EXTRACT(DOW FROM p.current_date) = 0
+		 OR EXISTS (
+			SELECT 1 
+			FROM gbs_hr_holiday_line hl LEFT JOIN gbs_hr_holiday h ON h.id = hl.holiday_id
+			WHERE
+				h.company_id = p.company_id
+				AND hl.date = p.current_date
+			)
 		) AS is_holiday
-	FROM
-		params p
+	FROM params p
 ),
 bjr AS (
 	SELECT
-		bjr_avg.planted_block_id block_id,
-		bjr_avg.tahun_kalkulasi avg_year,
-		bjr_avg.periode_kalkulasi::INTEGER avg_month,
-		bjr_avg.avg_weight
-	FROM
-		plantation_average_ffb bjr_avg
+		planted_block_id AS block_id,
+		tahun_kalkulasi AS avg_year,
+		periode_kalkulasi::INT AS avg_month,
+		avg_weight
+	FROM plantation_average_ffb
 ),
 weighbridge AS (
-	SELECT DISTINCT
-		wb.date_posting,
-		spb.division_id,
-		-- sbp.id,
-		SUM(wb.net_weight) wb_weight
+	SELECT
+		SUM(wb.net_weight) AS wb_weight
 	FROM
 		weighbridge_ticket wb
-		LEFT JOIN weighbridge_ticket_raw raw ON raw.weighbridge_ticket_id = wb.id
-		LEFT JOIN (SELECT DISTINCT spb_id, divisi_id division_id FROM mill_spb) spb ON spb.spb_id = wb.id
-		-- LEFT JOIN sakti_spb spb ON spb.id = wb.spb_id
-		LEFT JOIN params p ON TRUE
+		JOIN params p ON TRUE
 	WHERE
-		wb.transaction_type_id IN (86)
-		AND wb.state = 'valid'
-		AND raw.status_delete = '0'
-		AND TO_CHAR(wb.date_posting, 'YYYYMMDD') = p.current_date
-	GROUP BY
-		wb.date_posting,
-		wb.plantation_division_id,
-		spb.division_id
+		wb.date_posting = p.current_date
+		AND wb.company_id = p.company_id
+		AND wb.spb_id IN (
+			SELECT tr.id::TEXT FROM sakti_transport tr WHERE tr.transport_date::DATE = p.current_date
+		)
 ),
 premi_rate AS (
 	SELECT
@@ -137,23 +130,29 @@ premi_rate AS (
 	FROM
 		plantation_harvest_premi_rate rt
 		LEFT JOIN plantation_harvest_premi_rule rl ON rl.id = rt.rule_id 
+		JOIN params p ON TRUE
 	WHERE
-		rl.company_id = 1
-		AND rl.active 
+		rl.company_id = p.company_id
+		AND rl.active
 ),
-q1 AS (
+base_data AS (
 	SELECT
+		rkh.company_id,
+		rkh.estate_id,
 		rkh.division_id,
 		batch.id batch_id,
 		hvt.is_kutip_required,
-		hvt.emp_id emp_id,
-		CONCAT('[',emp.nomor_induk_pegawai,']', ' ', emp.name) emp_name,
-		rkh.rkh_date date,
+		hvt.emp_id,
+		emp.nomor_induk_pegawai emp_nip,
+		emp.name emp_name,
+		batch.rkh_id,
 		rkh.rkh_nbr,
+		rkh.rkh_date AS date,
 		hv.harvest_nbr,
-		block.name block,
+		loc.block_id,
+		block.name AS block,
 		hv.tph_id,
-		tph.name tph,
+		tph.name AS tph,
 		COALESCE(bkml.ha_amt, 0) ha_amt,
 		hv.bunch_qty,
 		COALESCE(bjr.avg_weight, 0) ref_bjr,
@@ -162,149 +161,147 @@ q1 AS (
 		hv.loose_fruit_qty
 	FROM
 		sakti_harvest hv
+		LEFT JOIN sakti_location loc ON loc.id = hv.location_id
 		LEFT JOIN sakti_harvester hvt ON hvt.id = hv.harvester_id  
 		LEFT JOIN sakti_foreman batch ON batch.id = hvt.foreman_id
 		LEFT JOIN sakti_rkh rkh ON rkh.id = batch.rkh_id 
 		LEFT JOIN sakti_bkm bkml ON bkml.harvester_id = hv.harvester_id AND bkml.location_id = hv.location_id 
 		LEFT JOIN hr_employee emp ON emp.id = hvt.emp_id
-		LEFT JOIN plantation_harvest_staging tph on tph.id = hv.tph_id 
-		LEFT JOIN plantation_land_planted block ON block.id = tph.planted_block_id
-		LEFT JOIN params p ON TRUE
-		LEFT JOIN weighbridge wb ON TO_CHAR(wb.date_posting, 'YYYYMMDD') = p.current_date AND wb.division_id = rkh.division_id
-		LEFT JOIN bjr bjr ON bjr.block_id = tph.planted_block_id
-			AND bjr.avg_year = DATE_PART('year', TO_DATE(p.current_date, 'YYYYMMDD') - '1 mon'::INTERVAL)::INTEGER
-			AND bjr.avg_month = DATE_PART('month', TO_DATE(p.current_date, 'YYYYMMDD') - '1 mon'::INTERVAL)::INTEGER
+		LEFT JOIN plantation_land_planted block ON block.id = loc.block_id
+		LEFT JOIN plantation_harvest_staging tph ON tph.id = hv.tph_id 
+		JOIN params p ON TRUE
+		LEFT JOIN weighbridge wb ON TRUE
+		LEFT JOIN bjr ON bjr.block_id = tph.planted_block_id
+			AND bjr.avg_year = DATE_PART('year', p.current_date - INTERVAL '1 month')
+			AND bjr.avg_month = DATE_PART('month', p.current_date - INTERVAL '1 month')
 	WHERE
-		TO_CHAR(rkh.rkh_date, 'YYYYMMDD') = p.current_date
+		rkh.company_id = p.company_id
+		AND rkh.rkh_date = p.current_date
 ),
-q2 AS (
+step1 AS (
 	SELECT
-		q1.*,
-		rwe.ref_weight_emp,
-		rwt.ref_weight_total,
-		(((q1.bunch_qty * q1.ref_bjr) / rwt.ref_weight_total) * q1.wb_weight) real_weight
-	FROM 
-		q1
-		LEFT JOIN (
-			SELECT q1.emp_id, SUM(q1.bunch_qty * q1.ref_bjr) ref_weight_emp
-			FROM q1
-			GROUP BY q1.emp_id
-		) rwe ON rwe.emp_id = q1.emp_id
-		LEFT JOIN (
-			SELECT SUM(q1.bunch_qty * q1.ref_bjr) ref_weight_total
-			FROM q1
-		) rwt ON TRUE
+		bd.*,
+		SUM(bd.ref_weight) OVER () AS ref_weight_total,
+		SUM(bd.ref_weight) OVER (PARTITION BY bd.emp_id) AS ref_weight_emp,
+		(bd.ref_weight / SUM(bd.ref_weight) OVER ()) * bd.wb_weight AS real_weight
+	FROM base_data bd
 ),
-q3 AS (
+step2 AS (
 	SELECT
-		q2.*,
-		q2.real_weight / q2.bunch_qty real_bjr,
-		rwe.real_weight_emp,
-		pr.weightbase + (
+		s1.*,
+		SUM(s1.real_weight) OVER (PARTITION BY s1.emp_id) AS real_weight_emp,
+		s1.real_weight / s1.bunch_qty AS real_bjr
+	FROM step1 s1
+),
+step3 AS (
+	SELECT
+		s2.*,
+		pr.weightbase +
 			CASE 
-				WHEN NOT q2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
+				WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
 				ELSE 0
-			END 
-		) weightbase,
-		(q2.real_weight / rwe.real_weight_emp) ratio,
-		(q2.real_weight / rwe.real_weight_emp) * (
-			pr.weightbase +
-			CASE 
-				WHEN NOT q2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
-				ELSE 0 
-			END
-		) avg_weightbase
+			END AS weightbase,
+		(s2.real_weight / s2.real_weight_emp) AS ratio,
+		(s2.real_weight / s2.real_weight_emp) *
+			(pr.weightbase +
+				CASE 
+					WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
+					ELSE 0 
+				END
+			) AS avg_weightbase
 	FROM
-		q2
-		LEFT JOIN (
-			SELECT q2.emp_id, SUM(q2.real_weight) real_weight_emp
-			FROM q2
-			GROUP BY q2.emp_id
-		) rwe ON rwe.emp_id = q2.emp_id
-		LEFT JOIN premi_rate pr ON (q2.real_weight / q2.bunch_qty) BETWEEN pr.bjr_min AND pr.bjr_max 
+		step2 s2
+		LEFT JOIN premi_rate pr ON s2.real_bjr BETWEEN pr.bjr_min AND pr.bjr_max
 ),
-q4 AS (
+step4 AS (
 	SELECT
-		q3.*,
-		awe.avg_weightbase_emp,
-		GREATEST(q3.real_weight_emp - awe.avg_weightbase_emp, 0) AS overbase_emp,
-		GREATEST(q3.real_weight_emp - awe.avg_weightbase_emp, 0) * q3.ratio overbase,
-		q3.real_weight - (GREATEST(q3.real_weight_emp - awe.avg_weightbase_emp, 0) * q3.ratio) base
-	FROM
-		q3
-		LEFT JOIN (
-			SELECT q3.emp_id, SUM(q3.avg_weightbase) avg_weightbase_emp
-			FROM q3
-			GROUP BY q3.emp_id
-		) awe ON awe.emp_id = q3.emp_id
+		s3.*,
+		SUM(s3.avg_weightbase) OVER (PARTITION BY s3.emp_id) AS avg_weightbase_emp
+	FROM step3 s3
 ),
-q5 AS (
+step5 AS (
 	SELECT
-		q4.*,
+		s4.*,
+		GREATEST(s4.real_weight_emp - s4.avg_weightbase_emp, 0) AS overbase_emp,
+		GREATEST(s4.real_weight_emp - s4.avg_weightbase_emp, 0) * s4.ratio AS overbase,
+		s4.real_weight - (GREATEST(s4.real_weight_emp - s4.avg_weightbase_emp, 0) * s4.ratio) AS base
+	FROM step4 s4
+),
+step6 AS (
+	SELECT
+		s5.*,
+		SUM(s5.base) OVER (PARTITION BY s5.emp_id) AS base_emp
+	FROM step5 s5
+),
+result_set AS (
+	SELECT
+		s6.*,
 		h.is_holiday,
-		be.base_emp,
-		(be.base_emp / q4.avg_weightbase_emp) * q4.ratio hk,
-		(be.base_emp / q4.avg_weightbase_emp) hk_emp,
-		CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END premi_rate,
-		((be.base_emp / q4.avg_weightbase_emp) * q4.ratio) * CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END overbase_premi,
-		CASE WHEN (q4.real_weight_emp / q4.avg_weightbase_emp) >= 2 THEN pr.premi_double_base_achieved_rate ELSE 0 END * q4.ratio doublebase_premi,
-		pr.premi_ffb_loose_rate loose_fruit_rate,
-		q4.loose_fruit_qty * pr.premi_ffb_loose_rate loose_fruit_premi
-	FROM
-		q4
-		LEFT JOIN holiday h ON TRUE
-		LEFT JOIN (
-			SELECT q4.emp_id, SUM(q4.base) base_emp
-			FROM q4
-			GROUP BY q4.emp_id
-		) be ON be.emp_id = q4.emp_id
-		LEFT JOIN premi_rate pr ON q4.real_bjr BETWEEN pr.bjr_min AND pr.bjr_max
+		(s6.base_emp / s6.avg_weightbase_emp) * s6.ratio AS hk,
+		(s6.base_emp / s6.avg_weightbase_emp) AS hk_emp,
+		CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS premi_rate,
+		((s6.base_emp / s6.avg_weightbase_emp) * s6.ratio) *
+			CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS overbase_premi,
+		CASE 
+			WHEN (s6.real_weight_emp / s6.avg_weightbase_emp) >= 2 
+			THEN pr.premi_double_base_achieved_rate 
+			ELSE 0 
+		END * s6.ratio AS doublebase_premi,
+		pr.premi_ffb_loose_rate AS loose_fruit_rate,
+		s6.loose_fruit_qty * pr.premi_ffb_loose_rate AS loose_fruit_premi
+	FROM step6 s6
+	LEFT JOIN holiday h ON TRUE
+	LEFT JOIN premi_rate pr ON s6.real_bjr BETWEEN pr.bjr_min AND pr.bjr_max
 )
 SELECT
-	q5.division_id,
-	q5.batch_id,
-	q5.emp_id,
-	q5.emp_name,
-	q5.date,
-	q5.is_holiday,
-	q5.rkh_nbr,
-	q5.harvest_nbr,
-	q5.block,
-	q5.tph_id,
-	q5.tph,
-	q5.ha_amt,
-	q5.bunch_qty,
-	q5.ref_bjr,
-	q5.ref_weight,
-	q5.ref_weight_emp,
-	q5.ref_weight_total,
-	q5.wb_weight,
-	q5.real_weight,
-	q5.real_bjr,
-	q5.real_weight_emp,
-	q5.weightbase,
-	q5.ratio,
-	q5.avg_weightbase,
-	q5.avg_weightbase_emp,
-	q5.overbase_emp,
-	q5.overbase,
-	q5.base,
-	q5.base_emp,
-	q5.hk,
-	q5.hk_emp,
-	q5.premi_rate,
-	q5.overbase_premi,
-	q5.doublebase_premi,
-	q5.loose_fruit_qty,
-	q5.loose_fruit_rate,
-	q5.loose_fruit_premi,
-	q5.overbase_premi + q5.doublebase_premi + q5.loose_fruit_premi total_premi
-FROM 
-	q5
+	rs.company_id,
+	rs.estate_id,
+	rs.division_id,
+	rs.batch_id,
+	rs.emp_id,
+	rs.emp_nip,
+	rs.emp_name,
+	rs.date,
+	rs.is_holiday,
+	rs.rkh_id,
+	rs.rkh_nbr,
+	rs.harvest_nbr,
+	rs.block_id,
+	rs.block,
+	rs.tph_id,
+	rs.tph,
+	rs.ha_amt,
+	rs.bunch_qty,
+	rs.ref_bjr,
+	rs.ref_weight,
+	rs.ref_weight_emp,
+	rs.ref_weight_total,
+	rs.wb_weight,
+	rs.real_weight,
+	rs.real_bjr,
+	rs.real_weight_emp,
+	rs.weightbase,
+	rs.ratio,
+	rs.avg_weightbase,
+	rs.avg_weightbase_emp,
+	rs.overbase_emp,
+	rs.overbase,
+	rs.base,
+	rs.base_emp,
+	rs.hk,
+	rs.hk_emp,
+	rs.premi_rate,
+	rs.overbase_premi,
+	rs.doublebase_premi,
+	rs.loose_fruit_qty,
+	rs.loose_fruit_rate,
+	rs.loose_fruit_premi,
+	rs.overbase_premi + rs.doublebase_premi + rs.loose_fruit_premi AS total_premi
+FROM result_set rs
 ORDER BY
-	q5.date,
-	q5.emp_name,
-	q5.block,
-	q5.tph
-;
+	rs.date,
+	rs.emp_nip,
+	rs.emp_name,
+	rs.block,
+	rs.tph;
 
