@@ -80,7 +80,7 @@ WHERE
 WITH params AS (
 	SELECT
 		1 AS company_id,
-		DATE '2026-03-04' AS current_date
+		DATE '2026-03-09' AS current_date
 ),
 holiday AS (
 	SELECT 
@@ -105,7 +105,7 @@ bjr AS (
 ),
 weighbridge AS (
 	SELECT
-		SUM(wb.net_weight) AS wb_weight
+		COALESCE(SUM(wb.net_weight), 0) AS wb_weight
 	FROM
 		weighbridge_ticket wb
 		JOIN params p ON TRUE
@@ -190,7 +190,7 @@ step2 AS (
 	SELECT
 		s1.*,
 		SUM(s1.real_weight) OVER (PARTITION BY s1.emp_id) AS real_weight_emp,
-		s1.real_weight / s1.bunch_qty AS real_bjr
+		s1.real_weight / NULLIF(s1.bunch_qty, 0) AS real_bjr
 	FROM step1 s1
 ),
 step3 AS (
@@ -201,8 +201,8 @@ step3 AS (
 				WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
 				ELSE 0
 			END AS weightbase,
-		(s2.real_weight / s2.real_weight_emp) AS ratio,
-		(s2.real_weight / s2.real_weight_emp) *
+		COALESCE(s2.real_weight / NULLIF(s2.real_weight_emp, 0), 0) AS ratio,
+		COALESCE(s2.real_weight / NULLIF(s2.real_weight_emp, 0), 0) *
 			(pr.weightbase +
 				CASE 
 					WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
@@ -237,13 +237,12 @@ result_set AS (
 	SELECT
 		s6.*,
 		h.is_holiday,
-		(s6.base_emp / s6.avg_weightbase_emp) * s6.ratio AS hk,
-		(s6.base_emp / s6.avg_weightbase_emp) AS hk_emp,
+		COALESCE(s6.base_emp / NULLIF(s6.avg_weightbase_emp, 0), 0) * s6.ratio AS hk,
+		COALESCE(s6.base_emp / NULLIF(s6.avg_weightbase_emp, 0), 0) AS hk_emp,
 		CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS premi_rate,
-		((s6.base_emp / s6.avg_weightbase_emp) * s6.ratio) *
-			CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS overbase_premi,
+		s6.overbase * CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS overbase_premi,
 		CASE 
-			WHEN (s6.real_weight_emp / s6.avg_weightbase_emp) >= 2 
+			WHEN (s6.real_weight_emp / NULLIF(s6.avg_weightbase_emp, 0)) >= 2 
 			THEN pr.premi_double_base_achieved_rate 
 			ELSE 0 
 		END * s6.ratio AS doublebase_premi,
@@ -303,5 +302,6 @@ ORDER BY
 	rs.emp_nip,
 	rs.emp_name,
 	rs.block,
-	rs.tph;
+	rs.tph
+;
 
