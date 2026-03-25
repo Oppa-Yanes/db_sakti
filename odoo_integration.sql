@@ -153,6 +153,8 @@ base_data AS (
 		hvt.emp_id,
 		emp.nomor_induk_pegawai emp_nip,
 		emp.name emp_name,
+		hvt.attendance_type_id,
+		att.code attendance_type_code,
 		batch.rkh_id,
 		rkh.rkh_nbr,
 		rkh.rkh_date AS date,
@@ -177,6 +179,7 @@ base_data AS (
 		LEFT JOIN hr_employee emp ON emp.id = hvt.emp_id
 		LEFT JOIN plantation_land_planted block ON block.id = loc.block_id
 		LEFT JOIN plantation_harvest_staging tph ON tph.id = hv.tph_id 
+		LEFT JOIN hr_attendance_type att ON att.id = hvt.attendance_type_id
 		JOIN params p ON TRUE
 		LEFT JOIN weighbridge wb ON TRUE
 		LEFT JOIN bjr ON bjr.block_id = tph.planted_block_id
@@ -269,6 +272,8 @@ SELECT
 	rs.emp_id,
 	rs.emp_nip,
 	rs.emp_name,
+	rs.attendance_type_id,
+	rs.attendance_type_code,
 	rs.date,
 	rs.is_holiday,
 	rs.rkh_id,
