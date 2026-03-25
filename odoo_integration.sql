@@ -1,21 +1,25 @@
 -- Hasil Panen - Header
 WITH params AS (
 	SELECT
+		1 company_id,
 		DATE '2026-03-09' current_date
 ),
 holiday AS (
-	SELECT (
-		EXTRACT(DOW FROM p.current_date) = 0
-		OR EXISTS (
+	SELECT 
+		(EXTRACT(DOW FROM p.current_date) = 0
+		 OR EXISTS (
 			SELECT 1 
-			FROM gbs_hr_holiday_line hl 
-			WHERE hl.date = p.current_date)
+			FROM gbs_hr_holiday_line hl LEFT JOIN gbs_hr_holiday h ON h.id = hl.holiday_id
+			WHERE
+				h.company_id = p.company_id
+				AND hl.date = p.current_date
+			)
 		) AS is_holiday
-	FROM
-		params p
+	FROM params p
 ),
 block_agg AS (
 	SELECT
+		rkh.company_id,
 		hvr.foreman_id,
 		hv.harvest_date::DATE harvest_date,
 		STRING_AGG(DISTINCT loc.block_id::TEXT, ', ') planted_block_ids
@@ -23,7 +27,9 @@ block_agg AS (
 		sakti_harvest hv
 		LEFT JOIN sakti_harvester hvr ON hvr.id = hv.harvester_id
 		LEFT JOIN sakti_location loc ON loc.id = hv.location_id
+		LEFT JOIN sakti_rkh rkh ON rkh.id = loc.rkh_id
 	GROUP BY
+		rkh.company_id,
 		hvr.foreman_id,
 		hv.harvest_date::DATE
 )
@@ -43,13 +49,14 @@ SELECT
 FROM
 	sakti_foreman batch
 	LEFT JOIN sakti_rkh rkh ON rkh.id = batch.rkh_id
-	LEFT JOIN block_agg bagg ON bagg.foreman_id = batch.id AND bagg.harvest_date = rkh.rkh_date
+	LEFT JOIN block_agg bagg ON bagg.foreman_id = batch.id AND bagg.harvest_date = rkh.rkh_date AND bagg.company_id = rkh.company_id
 	LEFT JOIN plantation_estate est ON est.id = rkh.estate_id
 	LEFT JOIN res_company com ON com.id = rkh.company_id
 	JOIN holiday h ON TRUE
 	JOIN params p ON TRUE
 WHERE
-	rkh.rkh_date = p.current_date 
+	rkh.company_id = p.company_id
+	AND rkh.rkh_date = p.current_date 
 ;
 
 -- Hasil Panen - Lines
@@ -80,7 +87,8 @@ WHERE
 WITH params AS (
 	SELECT
 		1 AS company_id,
-		DATE '2026-03-09' AS current_date
+		DATE '2026-03-09' AS current_date,
+		'41d68b8e-4d3c-4f4b-8232-9b9997febd8c'::UUID batch_id
 ),
 holiday AS (
 	SELECT 
@@ -241,6 +249,7 @@ result_set AS (
 		COALESCE(s6.base_emp / NULLIF(s6.avg_weightbase_emp, 0), 0) AS hk_emp,
 		CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS premi_rate,
 		s6.overbase * CASE WHEN h.is_holiday THEN pr.rate_3 ELSE pr.rate_1 END AS overbase_premi,
+		pr.premi_double_base_achieved_rate doublebase_premi_rate,
 		CASE 
 			WHEN (s6.real_weight_emp / NULLIF(s6.avg_weightbase_emp, 0)) >= 2 
 			THEN pr.premi_double_base_achieved_rate 
@@ -291,12 +300,17 @@ SELECT
 	rs.hk_emp,
 	rs.premi_rate,
 	rs.overbase_premi,
+	rs.doublebase_premi_rate,
 	rs.doublebase_premi,
 	rs.loose_fruit_qty,
 	rs.loose_fruit_rate,
 	rs.loose_fruit_premi,
 	rs.overbase_premi + rs.doublebase_premi + rs.loose_fruit_premi AS total_premi
-FROM result_set rs
+FROM
+	result_set rs
+	JOIN params p ON TRUE
+WHERE
+	rs.batch_id = p.batch_id
 ORDER BY
 	rs.date,
 	rs.emp_nip,
