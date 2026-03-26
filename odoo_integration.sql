@@ -121,7 +121,8 @@ weighbridge AS (
 		wb.date_posting = p.current_date
 		AND wb.company_id = p.company_id
 		AND wb.spb_id IN (
-			SELECT tr.id::TEXT FROM sakti_transport tr WHERE tr.transport_date::DATE = p.current_date
+			SELECT tr.id::TEXT FROM sakti_transport tr 
+			WHERE tr.transport_date::DATE = p.current_date
 		)
 ),
 premi_rate AS (
@@ -145,10 +146,12 @@ premi_rate AS (
 ),
 base_data AS (
 	SELECT
+		hv.id batch_line_id,
+		batch.id batch_id,
+		est.operating_unit_id,
 		rkh.company_id,
 		rkh.estate_id,
 		rkh.division_id,
-		batch.id batch_id,
 		hvt.is_kutip_required,
 		hvt.emp_id,
 		emp.nomor_induk_pegawai emp_nip,
@@ -175,10 +178,12 @@ base_data AS (
 		LEFT JOIN sakti_harvester hvt ON hvt.id = hv.harvester_id  
 		LEFT JOIN sakti_foreman batch ON batch.id = hvt.foreman_id
 		LEFT JOIN sakti_rkh rkh ON rkh.id = batch.rkh_id 
-		LEFT JOIN sakti_bkm bkml ON bkml.harvester_id = hv.harvester_id AND bkml.location_id = hv.location_id 
+		LEFT JOIN sakti_bkm bkml ON bkml.harvester_id = hv.harvester_id 
+			AND bkml.location_id = hv.location_id 
 		LEFT JOIN hr_employee emp ON emp.id = hvt.emp_id
 		LEFT JOIN plantation_land_planted block ON block.id = loc.block_id
 		LEFT JOIN plantation_harvest_staging tph ON tph.id = hv.tph_id 
+		LEFT JOIN plantation_estate est ON est.id = rkh.estate_id
 		LEFT JOIN hr_attendance_type att ON att.id = hvt.attendance_type_id
 		JOIN params p ON TRUE
 		LEFT JOIN weighbridge wb ON TRUE
@@ -209,14 +214,16 @@ step3 AS (
 		s2.*,
 		pr.weightbase +
 			CASE 
-				WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
+				WHEN NOT s2.is_kutip_required 
+					THEN pr.additional_base_for_panen_without_loose 
 				ELSE 0
 			END AS weightbase,
 		COALESCE(s2.real_weight / NULLIF(s2.real_weight_emp, 0), 0) AS ratio,
 		COALESCE(s2.real_weight / NULLIF(s2.real_weight_emp, 0), 0) *
 			(pr.weightbase +
 				CASE 
-					WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose 
+					WHEN NOT s2.is_kutip_required 
+						THEN pr.additional_base_for_panen_without_loose 
 					ELSE 0 
 				END
 			) AS avg_weightbase
@@ -265,10 +272,12 @@ result_set AS (
 	LEFT JOIN premi_rate pr ON s6.real_bjr BETWEEN pr.bjr_min AND pr.bjr_max
 )
 SELECT
+	rs.batch_line_id,
+	rs.batch_id,
+	rs.operating_unit_id,
 	rs.company_id,
 	rs.estate_id,
 	rs.division_id,
-	rs.batch_id,
 	rs.emp_id,
 	rs.emp_nip,
 	rs.emp_name,
