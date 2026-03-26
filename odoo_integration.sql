@@ -59,30 +59,7 @@ WHERE
 	AND rkh.rkh_date = p.current_date 
 ;
 
--- Hasil Panen - Lines
-WITH params AS (
-	SELECT
-		'41d68b8e-4d3c-4f4b-8232-9b9997febd8c'::UUID bkm_id
-)
-SELECT 
-	hvt.emp_id,
-	hvt.attendance_type_id,
-	loc.block_id,
-	hv.tph_id,
-	bkm.ha_amt,
-	hv.bunch_qty,
-	hv.loose_fruit_qty 
-FROM
-	sakti_harvest hv
-	LEFT JOIN sakti_harvester hvt ON hvt.id = hv.harvester_id 
-	LEFT JOIN sakti_location loc ON loc.id = hv.location_id 
-	LEFT JOIN sakti_bkm bkm ON bkm.harvester_id = hv.harvester_id AND bkm.location_id = hv.location_id
-	JOIN params p ON TRUE
-WHERE
-	hvt.foreman_id = p.bkm_id
-;
-
--- Hasil Panen - Premi
+-- Hasil Panen - Lines dan Premi
 -- Perhitungan Lebih Basis yang belum diintegrasikan antara WB dengan SAKTI
 WITH params AS (
 	SELECT
@@ -335,3 +312,64 @@ ORDER BY
 	rs.tph
 ;
 
+-- Query untuk upload data JEJAK mutu buah ke Odoo
+WITH params AS (
+	SELECT
+		11 category_id, -- konstanta
+		2 estate_id,
+		4 division_id,
+		'20260309' inspection_date
+)
+SELECT
+	bi.id inspection_id,
+	est.odoo_id estate_id,
+	est.name estate,
+	div.odoo_id divisi_id,
+	div.name divisi,
+	spv.id spv_id,
+	spv.nip spv_nip,
+	spv.emp_name spv_name,
+	spv.job_level spv_job_level,
+	spv.job_name spv_job_name,
+	hvt.id harvester_id,
+	hvt.nip harvester_nip,
+	hvt.emp_name harvester_name,
+	block.odoo_id block_id,
+	block.code block,
+	tph.id tph_id,
+	tph.code tph,
+	bi.ripe_qty+bi.unripe_qty+bi.rotten_qty+bi.lstalk_qty total_qty,
+	bi.ripe_qty,
+	bi.unripe_qty,
+	bi.rotten_qty,
+	bi.lstalk_qty,
+	bi.loose_qty,
+	bi.abnormal_01_qty,
+	bi.abnormal_02_qty,
+	bi.abnormal_03_qty,
+	bi.abnormal_04_qty
+FROM 
+	blok_inspeksi bi
+	LEFT JOIN inspeksi i ON i.id = bi.inspeksi_id
+	LEFT JOIN users u ON u.uuid = i.user_uuid
+	LEFT JOIN employee spv ON spv.id = u.odoo_id
+	LEFT JOIN employee hvt ON hvt.id = bi.emp_pemanen_id 
+	LEFT JOIN foreman_group fg ON fg.id = hvt.foreman_group_id 
+	LEFT JOIN blok block ON block.id = bi.blok_id 
+	LEFT JOIN tph tph ON tph.id = bi.tph_id 
+	LEFT JOIN estate est ON est.id = bi.estate_id 
+	LEFT JOIN divisi div ON div.id = bi.divisi_id
+	LEFT JOIN penalty pe ON pe.id = bi.penalty_id 
+	JOIN params p ON TRUE 
+WHERE
+	LEFT(spv.job_level,1) IN ('A','B','C','D')
+	AND bi.category_id = p.category_id 
+	AND TO_CHAR(i.date,'YYYYMMDD') = p.inspection_date	
+ORDER BY
+	bi.estate_id,
+	bi.divisi_id,
+	spv.job_level,
+	spv.emp_name,
+	block.code,
+	tph.code
+;
