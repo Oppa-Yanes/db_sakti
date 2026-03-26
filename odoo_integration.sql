@@ -312,6 +312,44 @@ ORDER BY
 	rs.tph
 ;
 
+-- tabel mutu buah di ODOO
+DROP TABLE IF EXISTS jejak_mutu_buah CASCADE;
+CREATE TABLE jejak_mutu_buah (
+	id SERIAL4 PRIMARY KEY,
+	inspection_id INT4,
+	inspection_date DATE,
+	estate_id INT4,
+	estate VARCHAR,
+	divisi_id INT4,
+	divisi VARCHAR,
+	spv_id INT4,
+	spv_nip VARCHAR,
+	spv_name VARCHAR,
+	spv_job_level VARCHAR,
+	spv_job_name VARCHAR,
+	harvester_id INT4,
+	harvester_nip VARCHAR,
+	harvester_name VARCHAR,
+	block_id INT4,
+	block VARCHAR,
+	tph_id INT4,
+	tph VARCHAR,
+	total_qty FLOAT8 DEFAULT 0,
+	ripe_qty FLOAT8 DEFAULT 0,
+	unripe_qty FLOAT8 DEFAULT 0,
+	rotten_qty FLOAT8 DEFAULT 0,
+	lstalk_qty FLOAT8 DEFAULT 0,
+	loose_qty FLOAT8 DEFAULT 0,
+	abnormal_01_qty FLOAT8 DEFAULT 0,
+	abnormal_02_qty FLOAT8 DEFAULT 0,
+	abnormal_03_qty FLOAT8 DEFAULT 0,
+	abnormal_04_qty FLOAT8 DEFAULT 0,
+	create_uid INT4 NULL,
+	create_date TIMESTAMP NULL,
+	write_uid INT4 NULL,
+	write_date TIMESTAMP NULL
+);
+
 -- Query untuk upload data JEJAK mutu buah ke Odoo
 -- Nama Tabel: jejak_mutu_buah
 WITH params AS (
