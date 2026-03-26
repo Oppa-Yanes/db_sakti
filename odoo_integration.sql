@@ -313,6 +313,7 @@ ORDER BY
 ;
 
 -- Query untuk upload data JEJAK mutu buah ke Odoo
+-- Nama Tabel: jejak_mutu_buah
 WITH params AS (
 	SELECT
 		11 category_id, -- konstanta
