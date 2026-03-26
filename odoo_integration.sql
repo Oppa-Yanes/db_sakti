@@ -147,6 +147,7 @@ premi_rate AS (
 base_data AS (
 	SELECT
 		hv.id batch_line_id,
+		hvt.id batch_line_premi_id,
 		batch.id batch_id,
 		est.operating_unit_id,
 		rkh.company_id,
@@ -273,6 +274,7 @@ result_set AS (
 )
 SELECT
 	rs.batch_line_id,
+	rs.batch_line_premi_id,
 	rs.batch_id,
 	rs.operating_unit_id,
 	rs.company_id,
