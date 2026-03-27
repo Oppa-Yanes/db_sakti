@@ -312,7 +312,8 @@ ORDER BY
 	rs.tph
 ;
 
--- tabel mutu buah di ODOO
+-- Tabel untuk menyimpan data JEJAK mutu buah ke Odoo
+-- Nama Tabel: jejak_mutu_buah
 DROP TABLE IF EXISTS jejak_mutu_buah CASCADE;
 CREATE TABLE jejak_mutu_buah (
 	id SERIAL4 PRIMARY KEY,
@@ -350,8 +351,7 @@ CREATE TABLE jejak_mutu_buah (
 	write_date TIMESTAMP NULL
 );
 
--- Query untuk upload data JEJAK mutu buah ke Odoo
--- Nama Tabel: jejak_mutu_buah
+-- Query untuk mentransfer data Jejak ke Odoo 
 WITH params AS (
 	SELECT
 		11 category_id, -- konstanta
