@@ -484,3 +484,59 @@ ON CONFLICT (jejak_id) DO UPDATE SET
 	abnormal_04_qty     = EXCLUDED.abnormal_04_qty,
 	write_date          = CURRENT_TIMESTAMP
 ;
+
+-- Query pembentuk Harvest Pinalty (mutu buah)
+WITH params AS (
+	SELECT
+		1 AS company_id,
+		DATE '2026-03-09' AS current_date,
+		1 batch_id -- ID dari Batch Harvest
+),
+pharvest AS (
+	SELECT DISTINCT
+		hv.id harvest_id,
+		hv.planted_block_id,
+		hv.employee_id,
+		hv.staging_location_id
+	FROM
+		plantation_harvest hv
+		JOIN params p ON TRUE
+	WHERE 
+		hv.harvest_batch_id = p.batch_id 
+)
+SELECT
+	est.operating_unit_id,
+	est.company_id,
+	hv.harvest_id,
+	rs.block_id planted_block_id,
+	rs.tph_id staging_location_id,
+	rs.harvester_id employee_id,
+	prule.id penalty_rule_id,
+	prate.id penalty_id,
+	prate.name name,
+	x.penalty_code code,
+	uom.name unit,
+	prate.uom_id uom_id,
+	x.penalty_amt penalty_qty,
+	COALESCE(prate.rate, 0) price_unit,
+	COALESCE(x.penalty_amt * prate.rate, 0) penalty_amount
+FROM
+	jejak_mutu_buah rs
+	LEFT JOIN pharvest hv ON hv.planted_block_id = rs.block_id 
+		AND hv.staging_location_id = rs.tph_id AND hv.employee_id = rs.harvester_id
+	CROSS JOIN LATERAL (VALUES
+			('MTH', rs.unripe_qty),
+			('BST', rs.rotten_qty),
+			('BTP', rs.lstalk_qty)
+		) AS x (penalty_code, penalty_amt)
+	LEFT JOIN plantation_harvest_penalty_rate prate ON prate.code = x.penalty_code
+	LEFT JOIN plantation_harvest_penalty_rule prule ON prule.id = prate.rule_id
+	LEFT JOIN uom_uom uom ON uom.id = prate.uom_id 
+	LEFT JOIN plantation_estate est ON est.id = rs.estate_id
+	JOIN params p ON TRUE
+WHERE
+	rs.jejak_date = p.current_date 
+	AND x.penalty_amt > 1
+	AND prule.active
+	AND prule.company_id = p.company_id 
+;
