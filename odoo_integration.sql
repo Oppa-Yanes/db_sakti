@@ -371,6 +371,41 @@ CREATE TABLE jejak_mutu_buah (
 	write_date TIMESTAMP NULL
 );
 
+-- Nama Tabel: jejak_mutu_ancak
+DROP TABLE IF EXISTS jejak_mutu_ancak CASCADE;
+CREATE TABLE jejak_mutu_ancak (
+	id SERIAL4 PRIMARY KEY,
+	jejak_id INT4,
+	jejak_date DATE,
+	estate_id INT4,
+	estate VARCHAR,
+	division_id INT4,
+	division VARCHAR,
+	inspector_id INT4,
+	inspector_nip VARCHAR,
+	inspector_name VARCHAR,
+	inspector_job_level VARCHAR,
+	inspector_job_name VARCHAR,
+	harvester_id INT4,
+	harvester_nip VARCHAR,
+	harvester_name VARCHAR,
+	block_id INT4,
+	block VARCHAR,
+	line_nbr INT4,
+	P00 FLOAT8 DEFAULT 0,
+	P01 FLOAT8 DEFAULT 0,
+	P02 FLOAT8 DEFAULT 0,
+	P03 FLOAT8 DEFAULT 0,
+	P04 FLOAT8 DEFAULT 0,
+	P05 FLOAT8 DEFAULT 0,
+	P06 FLOAT8 DEFAULT 0,
+	P07 FLOAT8 DEFAULT 0,
+	create_uid INT4 NULL,
+	create_date TIMESTAMP NULL,
+	write_uid INT4 NULL,
+	write_date TIMESTAMP NULL
+);
+
 -- Query untuk mentransfer data Jejak ke Odoo 
 WITH params AS (
 	SELECT
