@@ -418,7 +418,7 @@ SELECT
 	bi.abnormal_02_qty,
 	bi.abnormal_03_qty,
 	bi.abnormal_04_qty,
-	CURRENT_TIMESTAMP create_uid,
+	CURRENT_TIMESTAMP create_date,
 	CURRENT_TIMESTAMP write_date
 FROM 
 	blok_inspeksi bi
@@ -437,8 +437,7 @@ WHERE
 	LEFT(spv.job_level,1) IN ('A','B','C','D')
 	AND bi.category_id = p.category_id 
 	AND TO_CHAR(i.date,'YYYYMMDD') = p.inspection_date
-ON CONFLICT (jejak_id)
-DO UPDATE SET
+ON CONFLICT (jejak_id) DO UPDATE SET
 	jejak_date			= EXCLUDED.jejak_date,
 	estate_id           = EXCLUDED.estate_id,
 	estate              = EXCLUDED.estate,
