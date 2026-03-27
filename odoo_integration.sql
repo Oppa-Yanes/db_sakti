@@ -317,8 +317,8 @@ ORDER BY
 DROP TABLE IF EXISTS jejak_mutu_buah CASCADE;
 CREATE TABLE jejak_mutu_buah (
 	id SERIAL4 PRIMARY KEY,
-	inspection_id INT4,
-	inspection_date DATE,
+	jejak_id INT4,
+	jejak_date DATE,
 	estate_id INT4,
 	estate VARCHAR,
 	divisi_id INT4,
