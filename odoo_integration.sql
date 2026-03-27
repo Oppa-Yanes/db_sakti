@@ -15,6 +15,8 @@ ALTER TABLE plantation_harvest
 	ADD COLUMN base_emp NUMERIC(18,6) DEFAULT 0,
 	ADD COLUMN hk_emp NUMERIC(18,6) DEFAULT 0
 	;
+ALTER TABLE plantation_harvest_penalty ADD COLUMN staging_location_id INT4,
+	ADD CONSTRAINT fk_plantation_harvest_staging FOREIGN KEY (staging_location_id) REFERENCES plantation_harvest_staging(id);
 
 -- Hasil Panen - Header
 WITH params AS (
