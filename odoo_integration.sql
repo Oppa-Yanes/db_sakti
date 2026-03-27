@@ -1,3 +1,21 @@
+-- penyesuaian tabel di odoo
+ALTER TABLE plantation_batch_harvest ADD COLUMN sakti_batch_id UUID;
+ALTER TABLE plantation_harvest 
+	ADD COLUMN sakti_batch_line_id UUID,
+	ADD COLUMN ref_bjr NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN ref_weight NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN ref_weight_emp NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN ref_weight_total NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN wb_weight NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN real_weight_emp NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN ratio NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN avg_weightbase_emp NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN overbase_emp NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN base NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN base_emp NUMERIC(18,6) DEFAULT 0,
+	ADD COLUMN hk_emp NUMERIC(18,6) DEFAULT 0
+	;
+
 -- Hasil Panen - Header
 WITH params AS (
 	SELECT
