@@ -520,6 +520,129 @@ ON CONFLICT (jejak_id) DO UPDATE SET
 	write_date          = CURRENT_TIMESTAMP
 ;
 
+-- Query untuk mentransfer data Jejak ke Odoo 
+WITH params AS (
+	SELECT
+		10 category_id,
+		'20260309' inspection_date
+)
+INSERT INTO jejak_mutu_buah (
+	jejak_id,
+	jejak_date,
+	estate_id,
+	estate,
+	division_id,
+	division,
+	inspector_id,
+	inspector_nip,
+	inspector_name,
+	inspector_job_level,
+	inspector_job_name,
+	harvester_id,
+	harvester_nip,
+	harvester_name,
+	block_id,
+	block,
+	line_nbr,
+	p00,
+	p01,
+	p02,
+	p03,
+	p04,
+	p05,
+	p06,
+	p07,
+	create_uid,
+	write_date
+)
+SELECT
+	bi.id jejak_id,
+	i.date jejak_date,
+	est.odoo_id estate_id,
+	est.name estate,
+	div.odoo_id division_id,
+	div.name division,
+	spv.id inspector_id,
+	spv.nip inspector_nip,
+	spv.emp_name inspector_name,
+	spv.job_level inspector_job_level,
+	spv.job_name inspector_job_name,
+	hvt.id harvester_id,
+	hvt.nip harvester_nip,
+	hvt.emp_name harvester_name,
+	block.odoo_id block_id,
+	block.code block,
+	bi.no_baris line_nbr,
+	COALESCE(SUM(CASE WHEN pe.code = 'P00' THEN 1 END), 0) AS p00,
+	COALESCE(SUM(CASE WHEN pe.code = 'P01' THEN bi.qty END), 0) AS p01,
+	COALESCE(SUM(CASE WHEN pe.code = 'P02' THEN bi.qty END), 0) AS p02,
+	COALESCE(SUM(CASE WHEN pe.code = 'P03' THEN bi.qty END), 0) AS p03,
+	COALESCE(SUM(CASE WHEN pe.code = 'P04' THEN bi.qty END), 0) AS p04,	
+	COALESCE(SUM(CASE WHEN pe.code = 'P05' THEN bi.qty END), 0) AS p05,	
+	COALESCE(SUM(CASE WHEN pe.code = 'P06' THEN bi.qty END), 0) AS p06,	
+	COALESCE(SUM(CASE WHEN pe.code = 'P07' THEN bi.qty END), 0) AS p07,
+	CURRENT_TIMESTAMP create_date,
+	CURRENT_TIMESTAMP write_date
+FROM 
+	blok_inspeksi bi
+	LEFT JOIN inspeksi i ON i.id = bi.inspeksi_id
+	LEFT JOIN users u ON u.uuid = i.user_uuid
+	LEFT JOIN employee harvester ON harvester.id = bi.emp_pemanen_id 
+	LEFT JOIN blok block ON block.id = bi.blok_id 
+	LEFT JOIN estate est ON est.id = bi.estate_id 
+	LEFT JOIN divisi div ON div.id = bi.divisi_id 
+	LEFT JOIN penalty pe ON pe.id = bi.penalty_id 
+	LEFT JOIN employee spv ON spv.id = u.odoo_id
+	LEFT JOIN employee hvt ON hvt.id = bi.emp_pemanen_id 
+	JOIN params p ON TRUE 
+WHERE
+	bi.category_id = p.category_id 
+	AND TO_CHAR(i.date,'YYYYMMDD') = p.inspection_date	
+GROUP BY
+	bi.id,
+	i.date,
+	est.odoo_id,
+	est.name,
+	div.odoo_id,
+	div.name,
+	spv.id,
+	spv.nip,
+	spv.emp_name,
+	spv.job_level,
+	spv.job_name,
+	hvt.id,
+	hvt.nip,
+	hvt.emp_name,
+	block.odoo_id,
+	block.code,
+	bi.no_baris
+ON CONFLICT (jejak_id) DO UPDATE SET
+	jejak_date			= EXCLUDED.jejak_date,
+	estate_id           = EXCLUDED.estate_id,
+	estate              = EXCLUDED.estate,
+	division_id			= EXCLUDED.division_id,
+	division			= EXCLUDED.division,
+	inspector_id		= EXCLUDED.spv_id,
+	inspector_nip		= EXCLUDED.spv_nip,
+	inspector_name		= EXCLUDED.spv_name,
+	inspector_job_level	= EXCLUDED.spv_job_level,
+	inspector_job_name	= EXCLUDED.spv_job_name,
+	harvester_nip       = EXCLUDED.harvester_nip,
+	harvester_name      = EXCLUDED.harvester_name,
+	block_id            = EXCLUDED.block_id,
+	block               = EXCLUDED.block,
+	line_nbr			= EXCLUDED.line_nbr,
+	p00					= EXCLUDED.p00,
+	p01					= EXCLUDED.p01,
+	p02					= EXCLUDED.p02,
+	p03					= EXCLUDED.p03,
+	p04					= EXCLUDED.p04,
+	p05					= EXCLUDED.p05,
+	p06					= EXCLUDED.p06,
+	p07					= EXCLUDED.p07,
+	write_date			= CURRENT_TIMESTAMP
+;
+
 -- Query pembentuk Harvest Pinalty (mutu buah)
 WITH params AS (
 	SELECT
