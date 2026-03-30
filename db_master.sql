@@ -734,7 +734,7 @@ INSERT INTO m_equipment (
 		b.id IS NOT NULL 
 	UNION ALL
 	SELECT 
-		a.id, a.name, a.name, a.status_id, NULL, NULL, NULL, a.mark, a.description, NULL, NULL, a.create_date, 
+		a.id+10000, a.name, a.name, a.status_id, NULL, NULL, NULL, a.mark, a.description, NULL, NULL, a.create_date, 
 		b.company_id, a.estate_id, NULL, NULL, NULL, a.driver_name, a.transporter_id, NULL, NULL, NULL, 
 		NULL, NULL, NULL, NULL, a.measuring_type, NULL, 
 	  	NULL, NULL, FALSE, x.login, a.create_date, y.login, a.write_date
