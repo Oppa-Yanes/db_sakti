@@ -218,12 +218,10 @@ step3 AS (
 			END AS weightbase,
 		COALESCE(s2.real_weight / NULLIF(s2.real_weight_emp, 0), 0) AS ratio,
 		COALESCE(s2.real_weight / NULLIF(s2.real_weight_emp, 0), 0) *
-			(pr.weightbase +
-				CASE 
-					WHEN NOT s2.is_kutip_required 
-						THEN pr.additional_base_for_panen_without_loose 
-					ELSE 0 
-				END
+			(pr.weightbase + (
+				pr.weightbase *
+					CASE WHEN NOT s2.is_kutip_required THEN pr.additional_base_for_panen_without_loose / 100 ELSE 0 END
+				)
 			) AS avg_weightbase
 	FROM
 		step2 s2
