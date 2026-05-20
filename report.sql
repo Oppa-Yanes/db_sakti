@@ -1,4 +1,5 @@
 -- report monitong SAKTI
+-- https://pijar.gbs.id/operational/harvest-monitoring
 WITH params AS (
 	SELECT 
 		'20260211' current_date
@@ -116,6 +117,114 @@ WHERE
 ORDER BY
 	rkh.rkh_nbr,
 	loc.block_code
+;
+
+-- Laporan Perbandingan Pemanen BKM vs SAKTI
+-- URL:
+WITH params AS (
+    SELECT
+    	'20260511' AS harvest_date,
+    	1 AS company_id,
+    	14 AS estate_id,
+    	--63 AS division_id
+    	--NULL::INT AS estate_id,
+    	NULL::INT AS division_id
+),
+bkm AS (
+	SELECT
+		batch.company_id,
+		batch.estate_id,
+		dept.division_id,
+		batch.foreman_group_id,
+		hv.employee_id emp_id,
+		COALESCE(SUM(hv.harvest_area), 0) ha_qty,
+		COALESCE(SUM(hv.bunches_qty), 0) jjg_qty,
+		COALESCE(SUM(hv.loose_qty), 0) brd_qty
+	FROM
+		plantation_harvest hv
+		LEFT JOIN plantation_batch_harvest batch ON batch.id = hv.harvest_batch_id 
+		LEFT JOIN hr_foreman_group fg ON fg.id = batch.foreman_group_id 
+		LEFT JOIN hr_department dept ON dept.id = fg.department_id 
+		JOIN params p ON TRUE
+	WHERE
+		--batch.state = 'done'
+		batch.company_id = p.company_id 
+		AND (p.estate_id IS NULL OR batch.estate_id = p.estate_id)
+		AND (p.division_id IS NULL OR dept.division_id = p.division_id)
+		AND TO_CHAR(batch.date, 'YYYYMMDD') = p.harvest_date
+	GROUP BY
+		batch.company_id,
+		batch.estate_id,
+		dept.division_id,
+		batch.foreman_group_id,
+		hv.employee_id	
+),
+sakti AS (
+	SELECT
+		rkh.company_id,
+		rkh.estate_id,
+		rkh.division_id,
+		batch.foreman_group_id,
+		hvt.emp_id,
+		COALESCE(bkm.ha_qty, 0) ha_qty,
+		COALESCE(SUM(hv.bunch_qty), 0) jjg_qty,
+		COALESCE(SUM(hv.loose_fruit_qty), 0) brd_qty
+	FROM
+		sakti_harvest hv
+		LEFT JOIN sakti_harvester hvt ON hvt.sakti_id = hv.harvester_id
+		LEFT JOIN sakti_foreman batch ON batch.sakti_id = hvt.foreman_id
+		LEFT JOIN sakti_rkh rkh ON rkh.sakti_id = batch.rkh_id
+		LEFT JOIN (
+			SELECT
+				bkm.harvester_id,
+				COALESCE(SUM(bkm.ha_amt), 0) ha_qty
+			FROM
+				sakti_bkm bkm
+			GROUP BY
+				bkm.harvester_id 
+			) bkm ON bkm.harvester_id = hvt.sakti_id
+		JOIN params p ON TRUE
+	WHERE
+		rkh.company_id = p.company_id 
+		AND (p.estate_id IS NULL OR rkh.estate_id = p.estate_id)
+		AND (p.division_id IS NULL OR rkh.division_id = p.division_id)
+		AND TO_CHAR(hv.harvest_date, 'YYYYMMDD') = p.harvest_date
+	GROUP BY
+		rkh.company_id,
+		rkh.estate_id,
+		rkh.division_id,
+		batch.foreman_group_id,
+		hvt.emp_id,
+		bkm.ha_qty
+)
+SELECT
+    COALESCE(bkm.company_id, sakti.company_id) AS company_id,
+    coy.name company_name,
+    COALESCE(bkm.estate_id, sakti.estate_id) AS estate_id,
+    est.name estate_name,
+    COALESCE(bkm.division_id, sakti.division_id) AS division_id,
+    div.name division_name,
+    COALESCE(bkm.foreman_group_id, sakti.foreman_group_id) AS foreman_group_id,
+    fg.name foreman_group,
+    mandor.name forman_name,
+    COALESCE(bkm.emp_id, sakti.emp_id) AS emp_id,
+    emp.name harvester_name,
+    emp.nomor_induk_pegawai harvester_nip,
+    COALESCE(bkm.ha_qty, 0) AS bkm_ha_qty,
+    COALESCE(sakti.ha_qty, 0) AS sakti_ha_qty,
+    COALESCE(bkm.jjg_qty, 0) AS bkm_jjg_qty,
+    COALESCE(sakti.jjg_qty, 0) AS sakti_jjg_qty,
+    COALESCE(bkm.brd_qty, 0) AS bkm_brd_qty,
+    COALESCE(sakti.brd_qty, 0) AS sakti_brd_qty
+FROM
+	bkm
+	FULL JOIN sakti ON sakti.emp_id = bkm.emp_id
+	LEFT JOIN res_company coy ON coy.id = COALESCE(bkm.company_id, sakti.company_id)
+	LEFT JOIN plantation_estate est ON est.id = COALESCE(bkm.estate_id, sakti.estate_id)
+	LEFT JOIN plantation_division div ON div.id = COALESCE(bkm.division_id, sakti.division_id)
+	LEFT JOIN hr_foreman_group fg ON fg.id = COALESCE(bkm.foreman_group_id, sakti.foreman_group_id)
+	LEFT JOIN hr_employee mandor ON mandor.id = fg.foreman_id 
+	LEFT JOIN hr_employee emp ON emp.id = COALESCE(bkm.emp_id, sakti.emp_id)
 ;
 
 
