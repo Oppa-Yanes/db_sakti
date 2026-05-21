@@ -123,15 +123,17 @@ ORDER BY
 -- URL:
 WITH params AS (
     SELECT
-    	'20260511' AS harvest_date,
+    	'20260511' AS start_date,
+    	'20260511' AS end_date,    	
     	1 AS company_id,
     	14 AS estate_id,
-    	--63 AS division_id
     	--NULL::INT AS estate_id,
     	NULL::INT AS division_id
+    	--63 AS division_id
 ),
-bkm AS (
+odoo AS (
 	SELECT
+		hv.date::DATE harvest_date,
 		batch.company_id,
 		batch.estate_id,
 		dept.division_id,
@@ -151,8 +153,9 @@ bkm AS (
 		batch.company_id = p.company_id 
 		AND (p.estate_id IS NULL OR batch.estate_id = p.estate_id)
 		AND (p.division_id IS NULL OR dept.division_id = p.division_id)
-		AND TO_CHAR(batch.date, 'YYYYMMDD') = p.harvest_date
+		AND TO_CHAR(batch.date, 'YYYYMMDD') BETWEEN p.start_date AND p.end_date 
 	GROUP BY
+		hv.date,
 		batch.company_id,
 		batch.estate_id,
 		dept.division_id,
@@ -161,6 +164,7 @@ bkm AS (
 ),
 sakti AS (
 	SELECT
+		hv.harvest_date::DATE harvest_date,
 		rkh.company_id,
 		rkh.estate_id,
 		rkh.division_id,
@@ -188,8 +192,9 @@ sakti AS (
 		rkh.company_id = p.company_id 
 		AND (p.estate_id IS NULL OR rkh.estate_id = p.estate_id)
 		AND (p.division_id IS NULL OR rkh.division_id = p.division_id)
-		AND TO_CHAR(hv.harvest_date, 'YYYYMMDD') = p.harvest_date
+		AND TO_CHAR(hv.harvest_date, 'YYYYMMDD') BETWEEN p.start_date AND p.end_date 
 	GROUP BY
+		hv.harvest_date,
 		rkh.company_id,
 		rkh.estate_id,
 		rkh.division_id,
@@ -198,33 +203,37 @@ sakti AS (
 		bkm.ha_qty
 )
 SELECT
-    COALESCE(bkm.company_id, sakti.company_id) AS company_id,
+    COALESCE(odoo.harvest_date, sakti.harvest_date) harvest_date,
+    COALESCE(odoo.company_id, sakti.company_id) company_id,
     coy.name company_name,
-    COALESCE(bkm.estate_id, sakti.estate_id) AS estate_id,
+    COALESCE(odoo.estate_id, sakti.estate_id) estate_id,
     est.name estate_name,
-    COALESCE(bkm.division_id, sakti.division_id) AS division_id,
+    COALESCE(odoo.division_id, sakti.division_id) division_id,
     div.name division_name,
-    COALESCE(bkm.foreman_group_id, sakti.foreman_group_id) AS foreman_group_id,
+    COALESCE(odoo.foreman_group_id, sakti.foreman_group_id) foreman_group_id,
     fg.name foreman_group,
     mandor.name forman_name,
-    COALESCE(bkm.emp_id, sakti.emp_id) AS emp_id,
+    COALESCE(odoo.emp_id, sakti.emp_id) emp_id,
     emp.name harvester_name,
     emp.nomor_induk_pegawai harvester_nip,
-    COALESCE(bkm.ha_qty, 0) AS bkm_ha_qty,
-    COALESCE(sakti.ha_qty, 0) AS sakti_ha_qty,
-    COALESCE(bkm.jjg_qty, 0) AS bkm_jjg_qty,
-    COALESCE(sakti.jjg_qty, 0) AS sakti_jjg_qty,
-    COALESCE(bkm.brd_qty, 0) AS bkm_brd_qty,
-    COALESCE(sakti.brd_qty, 0) AS sakti_brd_qty
+    odoo.ha_qty bkm_ha_qty,
+    sakti.ha_qty sakti_ha_qty,
+    sakti.ha_qty / NULLIF(odoo.ha_qty, 0) ha_acc,
+    odoo.jjg_qty bkm_jjg_qty,
+    sakti.jjg_qty sakti_jjg_qty,
+    sakti.jjg_qty / NULLIF(odoo.jjg_qty, 0) jjg_acc,
+    odoo.brd_qty bkm_brd_qty,
+    sakti.brd_qty sakti_brd_qty,
+    sakti.brd_qty / NULLIF(odoo.brd_qty, 0) brd_acc
 FROM
-	bkm
-	FULL JOIN sakti ON sakti.emp_id = bkm.emp_id
-	LEFT JOIN res_company coy ON coy.id = COALESCE(bkm.company_id, sakti.company_id)
-	LEFT JOIN plantation_estate est ON est.id = COALESCE(bkm.estate_id, sakti.estate_id)
-	LEFT JOIN plantation_division div ON div.id = COALESCE(bkm.division_id, sakti.division_id)
-	LEFT JOIN hr_foreman_group fg ON fg.id = COALESCE(bkm.foreman_group_id, sakti.foreman_group_id)
+	odoo
+	FULL JOIN sakti ON sakti.emp_id = odoo.emp_id
+	LEFT JOIN res_company coy ON coy.id = COALESCE(odoo.company_id, sakti.company_id)
+	LEFT JOIN plantation_estate est ON est.id = COALESCE(odoo.estate_id, sakti.estate_id)
+	LEFT JOIN plantation_division div ON div.id = COALESCE(odoo.division_id, sakti.division_id)
+	LEFT JOIN hr_foreman_group fg ON fg.id = COALESCE(odoo.foreman_group_id, sakti.foreman_group_id)
 	LEFT JOIN hr_employee mandor ON mandor.id = fg.foreman_id 
-	LEFT JOIN hr_employee emp ON emp.id = COALESCE(bkm.emp_id, sakti.emp_id)
+	LEFT JOIN hr_employee emp ON emp.id = COALESCE(odoo.emp_id, sakti.emp_id)
 ;
 
 
