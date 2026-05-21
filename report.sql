@@ -197,7 +197,7 @@ sakti AS (
 		AND (p.division_id IS NULL OR rkh.division_id = p.division_id)
 		AND TO_CHAR(hv.harvest_date, 'YYYYMMDD') BETWEEN p.start_date AND p.end_date 
 	GROUP BY
-		hv.harvest_date,
+		hv.harvest_date::DATE,
 		rkh.company_id,
 		rkh.estate_id,
 		rkh.division_id,
