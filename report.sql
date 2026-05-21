@@ -212,7 +212,7 @@ SELECT
     div.name division_name,
     COALESCE(odoo.foreman_group_id, sakti.foreman_group_id) foreman_group_id,
     fg.name foreman_group,
-    mandor.name forman_name,
+    mandor.name foreman_name,
     COALESCE(odoo.emp_id, sakti.emp_id) emp_id,
     emp.name harvester_name,
     emp.nomor_induk_pegawai harvester_nip,
