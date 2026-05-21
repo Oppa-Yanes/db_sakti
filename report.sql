@@ -138,6 +138,7 @@ odoo AS (
 		batch.estate_id,
 		dept.division_id,
 		batch.foreman_group_id,
+		batch.kerani_id kerani_harvest_id,
 		hv.employee_id emp_id,
 		COALESCE(SUM(hv.harvest_area), 0) ha_qty,
 		COALESCE(SUM(hv.bunches_qty), 0) jjg_qty,
@@ -160,6 +161,7 @@ odoo AS (
 		batch.estate_id,
 		dept.division_id,
 		batch.foreman_group_id,
+		batch.kerani_id,
 		hv.employee_id	
 ),
 sakti AS (
@@ -169,6 +171,7 @@ sakti AS (
 		rkh.estate_id,
 		rkh.division_id,
 		batch.foreman_group_id,
+		batch.kerani_harvest_id,
 		hvt.emp_id,
 		COALESCE(bkm.ha_qty, 0) ha_qty,
 		COALESCE(SUM(hv.bunch_qty), 0) jjg_qty,
@@ -199,6 +202,7 @@ sakti AS (
 		rkh.estate_id,
 		rkh.division_id,
 		batch.foreman_group_id,
+		batch.kerani_harvest_id,
 		hvt.emp_id,
 		bkm.ha_qty
 )
@@ -212,10 +216,13 @@ SELECT
     div.name division_name,
     COALESCE(odoo.foreman_group_id, sakti.foreman_group_id) foreman_group_id,
     fg.name foreman_group,
+    mandor.id foreman_id,
     mandor.name foreman_name,
+    kerani.id kerani_id,
+    kerani.name kerani_name,
     COALESCE(odoo.emp_id, sakti.emp_id) emp_id,
-    emp.name harvester_name,
-    emp.nomor_induk_pegawai harvester_nip,
+    harvester.name harvester_name,
+    harvester.nomor_induk_pegawai harvester_nip,
     odoo.ha_qty bkm_ha_qty,
     sakti.ha_qty sakti_ha_qty,
     sakti.ha_qty / NULLIF(odoo.ha_qty, 0) ha_acc,
@@ -233,7 +240,8 @@ FROM
 	LEFT JOIN plantation_division div ON div.id = COALESCE(odoo.division_id, sakti.division_id)
 	LEFT JOIN hr_foreman_group fg ON fg.id = COALESCE(odoo.foreman_group_id, sakti.foreman_group_id)
 	LEFT JOIN hr_employee mandor ON mandor.id = fg.foreman_id 
-	LEFT JOIN hr_employee emp ON emp.id = COALESCE(odoo.emp_id, sakti.emp_id)
+	LEFT JOIN hr_employee kerani ON kerani.id = fg.kerani_harvest_id 
+	LEFT JOIN hr_employee harvester ON harvester.id = COALESCE(odoo.emp_id, sakti.emp_id)
 ;
 
 
