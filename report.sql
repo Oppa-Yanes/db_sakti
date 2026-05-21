@@ -223,15 +223,15 @@ SELECT
     COALESCE(odoo.emp_id, sakti.emp_id) harvester_id,
     harvester.name harvester_name,
     harvester.nomor_induk_pegawai harvester_nip,
-    odoo.ha_qty odoo_ha_qty,
-    sakti.ha_qty sakti_ha_qty,
-    sakti.ha_qty / NULLIF(odoo.ha_qty, 0) ha_acc,
-    odoo.jjg_qty odoo_jjg_qty,
-    sakti.jjg_qty sakti_jjg_qty,
-    sakti.jjg_qty / NULLIF(odoo.jjg_qty, 0) jjg_acc,
-    odoo.brd_qty odoo_brd_qty,
-    sakti.brd_qty sakti_brd_qty,
-    sakti.brd_qty / NULLIF(odoo.brd_qty, 0) brd_acc
+    COALESCE(odoo.ha_qty, 0) odoo_ha_qty,
+    COALESCE(sakti.ha_qty, 0) sakti_ha_qty,
+    COALESCE(sakti.ha_qty / NULLIF(odoo.ha_qty, 0), 0) ha_acc,
+    COALESCE(odoo.jjg_qty, 0) odoo_jjg_qty,
+    COALESCE(sakti.jjg_qty, 0) sakti_jjg_qty,
+    COALESCE(sakti.jjg_qty / NULLIF(odoo.jjg_qty, 0), 0) jjg_acc,
+    COALESCE(odoo.brd_qty, 0) odoo_brd_qty,
+    COALESCE(sakti.brd_qty, 0) sakti_brd_qty,
+    COALESCE(sakti.brd_qty / NULLIF(odoo.brd_qty, 0), 0) brd_acc
 FROM
 	odoo
 	FULL JOIN sakti ON sakti.emp_id = odoo.emp_id
