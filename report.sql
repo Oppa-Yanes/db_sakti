@@ -220,7 +220,7 @@ SELECT
     mandor.name foreman_name,
     kerani.id kerani_id,
     kerani.name kerani_name,
-    COALESCE(odoo.emp_id, sakti.emp_id) emp_id,
+    COALESCE(odoo.emp_id, sakti.emp_id) harvester_id,
     harvester.name harvester_name,
     harvester.nomor_induk_pegawai harvester_nip,
     odoo.ha_qty bkm_ha_qty,
