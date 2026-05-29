@@ -264,7 +264,7 @@ odoo AS (
 		dept.division_id,
 		batch.foreman_group_id,
 		batch.kerani_id kerani_harvest_id,
-		hv.employee_id emp_id,
+		hv.employee_id harvester_id,
 		COALESCE(SUM(hv.harvest_area), 0) ha_qty,
 		COALESCE(SUM(hv.bunches_qty), 0) jjg_qty,
 		COALESCE(SUM(hv.loose_qty), 0) brd_qty
@@ -297,7 +297,7 @@ sakti AS (
 		rkh.division_id,
 		batch.foreman_group_id,
 		batch.kerani_harvest_id,
-		hvt.emp_id,
+		hvt.emp_id harvester_id,
 		COALESCE(bkm.ha_qty, 0) ha_qty,
 		COALESCE(SUM(hv.bunch_qty), 0) jjg_qty,
 		COALESCE(SUM(hv.loose_fruit_qty), 0) brd_qty
@@ -346,7 +346,7 @@ result_set AS (
 	    mandor.name foreman_name,
 	    kerani.id kerani_id,
 	    kerani.name kerani_name,
-	    COALESCE(odoo.emp_id, sakti.emp_id) harvester_id,
+	    COALESCE(odoo.harvester_id, sakti.harvester_id) harvester_id,
 	    harvester.name harvester_name,
 	    harvester.nomor_induk_pegawai harvester_nip,
 	    COALESCE(odoo.ha_qty, 0) odoo_ha_qty,
@@ -360,50 +360,63 @@ result_set AS (
 	    COALESCE(sakti.brd_qty / NULLIF(odoo.brd_qty, 0), 0) brd_acc
 	FROM
 		odoo
-		FULL JOIN sakti ON sakti.emp_id = odoo.emp_id
+		FULL JOIN sakti ON sakti.harvester_id = odoo.harvester_id
 		LEFT JOIN res_company coy ON coy.id = COALESCE(odoo.company_id, sakti.company_id)
 		LEFT JOIN plantation_estate est ON est.id = COALESCE(odoo.estate_id, sakti.estate_id)
 		LEFT JOIN plantation_division div ON div.id = COALESCE(odoo.division_id, sakti.division_id)
 		LEFT JOIN hr_foreman_group fg ON fg.id = COALESCE(odoo.foreman_group_id, sakti.foreman_group_id)
 		LEFT JOIN hr_employee mandor ON mandor.id = fg.foreman_id 
 		LEFT JOIN hr_employee kerani ON kerani.id = fg.kerani_harvest_id 
-		LEFT JOIN hr_employee harvester ON harvester.id = COALESCE(odoo.emp_id, sakti.emp_id)
+		LEFT JOIN hr_employee harvester ON harvester.id = COALESCE(odoo.harvester_id, sakti.harvester_id)
 )
 SELECT
 	rs.harvest_date,
-  rs.company_id,
-  rs.company_name,
-  rs.estate_id,
-  rs.estate_name,
-  rs.division_id,
-  rs.division_name,
-  rs.foreman_group_id,
-  rs.foreman_group,
-  rs.foreman_name,
-  rs.kerani_id,
-  rs.kerani_name,
-  SUM(rs.odoo_ha_qty) odoo_ha_qty,
-  SUM(rs.sakti_ha_qty) sakti_ha_qty,
-  SUM(rs.odoo_jjg_qty) odoo_jjg_qty,
-  SUM(rs.sakti_jjg_qty) sakti_jjg_qty,
-  SUM(rs.odoo_brd_qty) odoo_brd_qty,
-  SUM(rs.sakti_brd_qty) sakti_brd_qty,
-  GREATEST((1 - (ABS(SUM(rs.sakti_ha_qty) - SUM(rs.odoo_ha_qty)) / NULLIF(SUM(rs.odoo_ha_qty), 0))), 0) AS ha_acc,
-  GREATEST((1 - (ABS(SUM(rs.sakti_jjg_qty) - SUM(rs.odoo_jjg_qty)) / NULLIF(SUM(rs.odoo_jjg_qty), 0))), 0) AS jjg_acc,
-  GREATEST((1 - (ABS(SUM(rs.sakti_brd_qty) - SUM(rs.odoo_brd_qty)) / NULLIF(SUM(rs.odoo_brd_qty), 0))), 0) AS brd_acc
+	rs.company_id,
+	rs.company_name,
+	rs.estate_id,
+	rs.estate_name,
+	rs.division_id,
+	rs.division_name,
+	rs.foreman_group_id,
+	rs.foreman_group,
+	rs.foreman_name,
+	rs.kerani_id,
+	rs.kerani_name,
+	rs.harvester_id,
+	rs.harvester_name,
+	SUM(rs.odoo_ha_qty) odoo_ha_qty,
+	SUM(rs.sakti_ha_qty) sakti_ha_qty,
+	SUM(rs.odoo_jjg_qty) odoo_jjg_qty,
+	SUM(rs.sakti_jjg_qty) sakti_jjg_qty,
+	SUM(rs.odoo_brd_qty) odoo_brd_qty,
+	SUM(rs.sakti_brd_qty) sakti_brd_qty,
+	GREATEST((1 - (ABS(SUM(rs.sakti_ha_qty) - SUM(rs.odoo_ha_qty)) / NULLIF(SUM(rs.odoo_ha_qty), 0))), 0) AS ha_acc,
+	GREATEST((1 - (ABS(SUM(rs.sakti_jjg_qty) - SUM(rs.odoo_jjg_qty)) / NULLIF(SUM(rs.odoo_jjg_qty), 0))), 0) AS jjg_acc,
+	GREATEST((1 - (ABS(SUM(rs.sakti_brd_qty) - SUM(rs.odoo_brd_qty)) / NULLIF(SUM(rs.odoo_brd_qty), 0))), 0) AS brd_acc
 FROM
 	result_set rs
 GROUP BY
 	rs.harvest_date,
-  rs.company_id,
-  rs.company_name,
-  rs.estate_id,
-  rs.estate_name,
-  rs.division_id,
-  rs.division_name,
-  rs.foreman_group_id,
-  rs.foreman_group,
-  rs.foreman_name,
-  rs.kerani_id,
-  rs.kerani_name
+	rs.company_id,
+	rs.company_name,
+	rs.estate_id,
+	rs.estate_name,
+	rs.division_id,
+	rs.division_name,
+	rs.foreman_group_id,
+	rs.foreman_group,
+	rs.foreman_name,
+	rs.kerani_id,
+	rs.kerani_name,
+	rs.harvester_id,
+	rs.harvester_name
+ ORDER BY
+ 	rs.harvest_date,
+	rs.company_name,
+	rs.estate_name,
+	rs.division_name,
+	rs.foreman_group,
+	rs.foreman_name,
+	rs.kerani_name,
+	rs.harvester_name
 ;
