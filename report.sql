@@ -330,3 +330,27 @@ GROUP BY
 	rs.kerani_name,
 	rs.harvester_name
 ;
+
+-- Monitoring Harian Pengiriman TBS sd PKS
+SELECT
+	COALESCE(div.name, wb.supplier_name) divisi,
+	COALESCE(tr.transport_nbr, '<tidak ada SPB>') spb,
+	tr.transport_date + INTERVAL '7 hour' tanggal_kirim,
+	COALESCE(wb.ticket_no, '<restan gantung>') tiket_timbang,
+	wb.date_in tanggal_terima,	
+	COALESCE(wb.driver_name, tr.driver_name) driver,
+	COALESCE(wb.vehicle_number, tr.equipment_nbr) nopol,
+	tr.total_bunch jjg_spb,
+	wb.unit_qty jjg_wb,
+	tr.total_bunch - wb.unit_qty jjg_var
+FROM
+	sakti_transport tr
+	FULL JOIN weighbridge_ticket_raw wb ON wb.spb_id = tr.sakti_id
+	LEFT JOIN plantation_division div ON div.id = tr.division_id 
+WHERE
+	COALESCE(date_posting::DATE, tr.transport_date::DATE) = '2026-06-05'
+	AND LEFT(COALESCE(wb.supplier_name, div.name), 3) = 'LME'
+ORDER BY
+	COALESCE(div.name, wb.supplier_name),
+	wb.date_in
+;
