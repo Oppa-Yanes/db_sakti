@@ -155,6 +155,7 @@ WHERE
 	hv.location_id = $1
 ORDER BY
 	hv.tph_code
+;
 
 -- Laporan Akurasi ODOO vs SAKTI per Kerani Panen
 -- URL:
