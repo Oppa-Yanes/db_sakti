@@ -119,6 +119,43 @@ ORDER BY
 	loc.block_code
 ;
 
+-- Detail panen per TPH (combine dengan query di atas)
+-- https://pijar.gbs.id/operational/harvest-monitoring
+SELECT
+	hv.tph_code,
+	hv.bunch_qty,
+	hv.unripe_qty,
+	hv.rotten_empty_bunch_qty,
+	hv.loose_fruit_qty,
+	hv.transport_id,
+	COALESCE(tr.transport_nbr, '') AS no_spb,
+	COALESCE(eq.code, '') AS transport_nbr,
+	COALESCE(tr.driver_name, '') AS driver_name,
+	COALESCE(thr.name, '') AS harvester_name,
+	COALESCE(thr.nip, '') AS harvester_nip,
+	COALESCE(em.name, '') AS foreman_name,
+	COALESCE(mp.name, '') AS created_by,
+	hv.harvest_nbr,
+	hv.harvest_date,
+	COALESCE(hv.pic_uri, '') AS bcc_pic_uri,
+	o.report_nbr,
+	o.report_type,
+	COALESCE(o.pic_uri, '') AS ba_pic_uri,
+	tr.pic_uri
+FROM
+	t_harvest hv
+	LEFT JOIN t_transport tr ON tr.id = hv.transport_id
+	LEFT JOIN m_equipment eq ON eq.id = tr.equipment_id
+	LEFT JOIN t_harvester thr ON thr.id = hv.harvester_id
+	LEFT JOIN t_foreman tf ON tf.id = thr.foreman_id
+	LEFT JOIN m_employee em ON em.id = tf.foreman_id
+	LEFT JOIN m_profile mp ON mp.id = hv.profile_id
+	LEFT JOIN t_official_report o ON o.harvest_id = hv.id
+WHERE
+	hv.location_id = $1
+ORDER BY
+	hv.tph_code
+
 -- Laporan Akurasi ODOO vs SAKTI per Kerani Panen
 -- URL:
 WITH params AS (
