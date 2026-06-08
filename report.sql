@@ -354,3 +354,50 @@ ORDER BY
 	COALESCE(div.name, wb.supplier_name),
 	wb.date_in
 ;
+
+-- ODOO WEIGHBRIDGE
+WITH params AS (
+	SELECT
+		1 AS company_id,
+		'2026-06-01'::DATE start_date,
+		'2026-06-08'::DATE end_date
+)
+SELECT 
+	wb.id,
+	wb.company_id,
+	wb.operating_unit_id,
+	wb.plantation_division_id division_id,
+	wb.transporter_id,
+	wb.supplier_id,
+	wb.transaction_type_id,
+	wb.transaction_type,
+	wb.type wb_type,
+	wb.state,
+	wb.name,
+	wb.ticket_no,
+	wb.spb_id,
+	wb.spb_nbr,
+	wb.date_in,
+	wb.date_out,
+	wb.date_posting,
+	wb.driver_name,
+	wb.vehicle_number,
+	wb.no_contract,
+	wb.gross_weight,
+	wb.tarre_weight,
+	wb.net_weight,
+	wb.deduction_weight,
+	wb.weight
+FROM
+	weighbridge_ticket wb
+	LEFT JOIN weighbridge_transaction_type wbtype ON wbtype.id = wb.transaction_type_id
+	LEFT JOIN params p ON TRUE
+WHERE
+	wbtype.code = CASE 
+		WHEN p.company_id = 1 THEN '111'
+		WHEN p.company_id = 2 THEN '222'
+	END
+	AND wb.company_id = p.company_id
+	AND wb.state = 'valid'
+	AND wb.date_posting BETWEEN p.start_date AND p.end_date 
+;
