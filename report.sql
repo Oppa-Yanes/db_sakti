@@ -401,3 +401,58 @@ WHERE
 	AND wb.state = 'valid'
 	AND wb.date_posting BETWEEN p.start_date AND p.end_date 
 ;
+
+-- LAPORAN PENERIMAAN PABRIK (PAK WAHYU)
+WITH params AS (
+	SELECT
+		14 estate_id,
+		'2026-07-15'::DATE wb_date
+),
+harvest AS (
+	SELECT
+		hv.transport_id,
+		SUM(hv.bunch_qty) bunch_qty,
+		SUM(hv.loose_fruit_qty) loose_fruit_qty,
+		SUM(hv.bunch_qty) FILTER (WHERE hv.harvest_date::DATE <> wb.date_posting::DATE) restan_qty
+	FROM
+		sakti_harvest hv
+		LEFT JOIN weighbridge_ticket wb ON wb.spb_id = hv.transport_id 
+	GROUP BY
+		hv.transport_id
+)
+SELECT
+	div.estate_id,
+	wb.plantation_division_id division_id,
+	div.name division,
+	wb.spb_id,
+	COALESCE(wb.spb_nbr, '<tidak ada SPB>') spb_nbr,
+	tr.transport_date + INTERVAL '7 hour' sent_date,
+	COALESCE(wb.ticket_no, '<restan gantung>') tiket_timbang,
+	COALESCE(wb.driver_name, tr.driver_name) driver,
+	COALESCE(wb.vehicle_number, tr.equipment_nbr) nopol,
+	CASE WHEN tr.is_external THEN 'Rental' ELSE 'Kebun' END AS owner,
+	wb.date_posting wb_date,
+	wb.date_in::TIME time_in,
+	wb.gross_weight weight_in,
+	wb.date_out::TIME time_out,
+	wb.tarre_weight weight_out,
+	wb.deduction_weight deduction,
+	wb.net_weight weight,
+	hv.bunch_qty,
+	wb.net_weight / NULLIF(hv.bunch_qty, 0) bjr,
+	hv.loose_fruit_qty,
+	COALESCE(hv.restan_qty, 0) restan_qty,
+	COALESCE(hv.restan_qty, 0) * (wb.net_weight / NULLIF(hv.bunch_qty, 0)) restan_weight
+FROM
+	weighbridge_ticket wb
+	LEFT JOIN plantation_division div ON div.id = wb.plantation_division_id
+	LEFT JOIN sakti_transport tr ON tr.sakti_id = wb.spb_id
+	LEFT JOIN harvest hv ON hv.transport_id = wb.spb_id 
+	JOIN params p ON TRUE
+WHERE
+	wb.date_posting = p.wb_date
+	AND div.estate_id = p.estate_id 
+ORDER BY
+	div.name,
+	wb.date_in
+;
