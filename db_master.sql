@@ -34,6 +34,7 @@ CREATE TABLE m_estate (
     code VARCHAR NOT NULL UNIQUE,
     name VARCHAR NOT NULL,
     mark VARCHAR,
+	initial VARCHAR,
     is_pabrik BOOLEAN DEFAULT FALSE,
     is_nursery BOOLEAN DEFAULT FALSE,
     operating_unit_id INT4 NOT NULL,
@@ -436,8 +437,8 @@ SET
 
 -- estate
 UPDATE m_estate SET is_disabled = TRUE;
-INSERT INTO m_estate (id, code, name, mark, is_pabrik, is_nursery, operating_unit_id, company_id, is_disabled, create_by, create_date, write_by, write_date)
-SELECT a.id, a.code, a.name, a.mark, COALESCE(a.is_pabrik,FALSE), COALESCE(a.is_nursery,FALSE), a.operating_unit_id, a.company_id, FALSE, x.login, a.create_date, y.login, a.write_date
+INSERT INTO m_estate (id, code, name, mark, initial, is_pabrik, is_nursery, operating_unit_id, company_id, is_disabled, create_by, create_date, write_by, write_date)
+SELECT a.id, a.code, a.name, a.mark, a,initial, COALESCE(a.is_pabrik,FALSE), COALESCE(a.is_nursery,FALSE), a.operating_unit_id, a.company_id, FALSE, x.login, a.create_date, y.login, a.write_date
 FROM
     plantation_estate a
     LEFT JOIN res_users x ON x.id = a.create_uid
@@ -448,6 +449,7 @@ SET
     code = EXCLUDED.code,
     name = EXCLUDED.name,
     mark = EXCLUDED.mark,
+	initial = EXCLUDED.initial,
     is_pabrik = EXCLUDED.is_pabrik,
     is_nursery = EXCLUDED.is_nursery,
     operating_unit_id = EXCLUDED.operating_unit_id,
