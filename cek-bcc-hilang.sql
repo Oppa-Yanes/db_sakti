@@ -45,13 +45,14 @@ WHERE COALESCE(hv.bcc, 0) = 0
 ORDER BY spb.transport_date, spb.transport_nbr;
 
 -- Daftar BCC yang hilang (ada di relay, tidak ada di `t_harvest`)
-SELECT t.transport_nbr, t.transport_date, r.harvest_id, r.location_id,
+SELECT t.transport_nbr, t.transport_date, r.harvest_id, r.location_id, tl.block_code,
        r.profile_id, r.create_by, r.create_date
 FROM trx.t_transport t
 JOIN trx.t_transport_harvest_rel r ON r.transport_id = t.id
 LEFT JOIN trx.t_harvest h ON h.id = r.harvest_id
+LEFT JOIN trx.t_location tl ON tl.id = r.location_id
 WHERE t.transport_date >= '2026-10-01' AND t.transport_date < '2026-10-30' 
-  AND t.estate_id = 14                                             
+  AND t.estate_id = 15                                           
   AND r.harvest_id IS NOT NULL
   AND h.id IS NULL
 ORDER BY t.transport_nbr, r.create_date;
